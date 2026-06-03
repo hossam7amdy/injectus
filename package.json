@@ -1,0 +1,67 @@
+{
+	"name": "injectus",
+	"version": "0.1.0",
+	"type": "module",
+	"description": "High-performant, decorator-free IoC container for Node.js — sync inject(), explicit lifetimes, TC39-native disposal.",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=22.6.0"
+	},
+	"license": "ISC",
+	"author": "Hossam Hamdy <hossamhamdy117@gmail.com> (https://github.com/hossam7amdy)",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hossam7amdy/injectus.git"
+	},
+	"homepage": "https://github.com/hossam7amdy/injectus#readme",
+	"bugs": {
+		"url": "https://github.com/hossam7amdy/injectus/issues"
+	},
+	"scripts": {
+		"clean": "rm -rf dist",
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc -p tsconfig.json",
+		"test": "node --import=tsx --test src/__tests__/*.test.ts",
+		"test:watch": "node --import=tsx --test --watch src/__tests__/*.test.ts",
+		"test:cov": "node --import=tsx --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 src/__tests__/*.test.ts",
+		"preversion": "pnpm clean && pnpm build && pnpm check && pnpm typecheck && pnpm test:cov",
+		"prepublishOnly": "pnpm clean && pnpm build && pnpm check && pnpm typecheck && pnpm test:cov",
+		"check": "biome check . && prettier --check \"**/*.{md,yaml}\"",
+		"check:fix": "biome check . --write && prettier --write \"**/*.{md,yaml}\"",
+		"postpublish": "git push --follow-tags",
+		"release:dry": "pnpm publish --dry-run",
+		"release:alpha": "pnpm version prerelease --preid alpha -m \"chore(release): v%s\" && pnpm publish --tag alpha",
+		"release:patch": "pnpm version patch -m \"chore(release): v%s\" && pnpm publish",
+		"release:minor": "pnpm version minor -m \"chore(release): v%s\" && pnpm publish",
+		"release:major": "pnpm version major -m \"chore(release): v%s\" && pnpm publish"
+	},
+	"prettier": {
+		"printWidth": 80,
+		"tabWidth": 2,
+		"useTabs": false,
+		"proseWrap": "preserve"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.16",
+		"@types/node": "^25.9.1",
+		"prettier": "^3.8.3",
+		"typescript": "^6.0.3"
+	},
+	"packageManager": "pnpm@11.5.1"
+}
