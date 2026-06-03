@@ -1,0 +1,19 @@
+pre-commit:
+  commands:
+    pnpm-only:
+      run: |
+        if [ -f package-lock.json ] || [ -f yarn.lock ]; then
+          echo "Conflicting lockfile detected. Use pnpm only (remove package-lock.json / yarn.lock)."
+          exit 1
+        fi
+    lint:
+      run: pnpm biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
+      stage_fixed: true
+    format:
+      glob: "**/*.{md,yaml}"
+      run: pnpm prettier --write {staged_files}
+      stage_fixed: true
+    coverage:
+      run: pnpm test:cov
+    typecheck:
+      run: pnpm typecheck

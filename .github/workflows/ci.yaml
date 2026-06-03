@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        node: [20, 22, 24, current]
+        node: [22, 24, current]
 
     steps:
       - name: Checkout
