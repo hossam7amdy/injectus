@@ -21,7 +21,10 @@
     "node": ">=22.6.0"
   },
   "devEngines": {
-    "node": ">=24.26.0"
+    "runtime": {
+      "name": "node",
+      "version": ">=24.16.0"
+    }
   },
   "keywords": [
     "dependency-injection",
