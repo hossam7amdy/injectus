@@ -48,6 +48,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test src/__tests__/*.test.ts",
     "test:watch": "node --test --watch src/__tests__/*.test.ts",
+    "test:cov:node22": "node --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 \"src/__tests__/!(*.esnext).test.ts\"",
     "test:cov": "node --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 src/__tests__/*.test.ts",
     "preversion": "pnpm clean && pnpm build && pnpm check && pnpm typecheck && pnpm test:cov",
     "prepublishOnly": "pnpm clean && pnpm build && pnpm check && pnpm typecheck && pnpm test:cov",

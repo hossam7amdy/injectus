@@ -17,7 +17,7 @@ jobs:
   ci:
     name: Lint, Test & Build (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
-    timeout-minutes: 1
+    timeout-minutes: 5
     strategy:
       fail-fast: true
       matrix:
@@ -51,6 +51,7 @@ jobs:
         if: matrix.node != 22
         run: pnpm test:cov
 
-      - name: Test
+      # Node 22 cannot parse `await using`; exclude *.esnext.test.ts files.
+      - name: Test coverage (Node 22)
         if: matrix.node == 22
-        run: pnpm test
+        run: pnpm test:cov:node22
