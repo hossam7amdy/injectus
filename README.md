@@ -1,4 +1,10 @@
-# injectus
+# Injectus
+
+[![npm](https://img.shields.io/npm/v/injectus.svg?maxAge=1000)](https://www.npmjs.com/package/injectus)
+[![CI](https://github.com/hossam7amdy/injectus/actions/workflows/ci.yaml/badge.svg)](https://github.com/hossam7amdy/injectus/actions/workflows/ci.yaml)
+[![coveralls](https://coveralls.io/repos/github/hossam7amdy/injectus/badge.svg)](https://coveralls.io/github/hossam7amdy/injectus)
+[![npm](https://img.shields.io/npm/l/injectus.svg?maxAge=1000)](https://github.com/hossam7amdy/injectus/blob/master/LICENSE.md)
+[![node](https://img.shields.io/node/v/injectus.svg?maxAge=1000)](https://www.npmjs.com/package/injectus)
 
 Zero-dependency, decorator-free IoC container for Node.js.
 
@@ -33,7 +39,13 @@ injector.resolve(UserService).findAll();
 
 ```sh
 npm install injectus
+```
+
+```sh
 pnpm add injectus
+```
+
+```sh
 yarn add injectus
 ```
 
