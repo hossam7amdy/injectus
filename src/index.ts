@@ -8,6 +8,7 @@ export {
 export {
   CaptiveDependencyError,
   CircularDependencyError,
+  DependencyPathError,
   InjectionContextError,
   InjectorDisposedError,
   TokenNotFoundError,

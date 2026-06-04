@@ -262,7 +262,7 @@ const injector = Injector.create({
 | `InjectionContextError`   | `inject()` called outside a factory or field initializer       |
 | `InjectorDisposedError`   | Resolved from a disposed injector, or ancestor was disposed    |
 
-`CircularDependencyError` and `CaptiveDependencyError` render the full dependency path root-to-leaf in their `message`.
+`CircularDependencyError` and `CaptiveDependencyError` extend `DependencyPathError`, which exposes the full dependency path root-to-leaf as `path: readonly Token[]` (also rendered in `message`).
 
 ---
 

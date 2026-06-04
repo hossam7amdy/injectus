@@ -76,6 +76,18 @@ describe("errors — DependencyPathError.prepend", TEST_OPTIONS, () => {
       /Chain: InjectionToken\(Outer\) -> InjectionToken\(Mid\) -> InjectionToken\(Scoped\)\./,
     );
   });
+
+  it("exposes the accumulated path root-to-leaf", () => {
+    const Scoped = new InjectionToken<number>("Scoped");
+    const Mid = new InjectionToken<number>("Mid");
+    const Outer = new InjectionToken<number>("Outer");
+    const err = new CaptiveDependencyError(Scoped);
+
+    assert.deepEqual(err.path, [Scoped]);
+    DependencyPathError.prepend(err, Mid);
+    DependencyPathError.prepend(err, Outer);
+    assert.deepEqual(err.path, [Outer, Mid, Scoped]);
+  });
 });
 
 describe("errors — InjectionContextError", TEST_OPTIONS, () => {

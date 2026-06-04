@@ -1,7 +1,7 @@
 import { type Token, tokenName } from "./token.ts";
 
 /**
- * @internal Base for errors that accumulate a dependency path as the exception
+ * Base for errors that accumulate a dependency path as the exception
  * unwinds through nested `hydrate()` frames.
  */
 export abstract class DependencyPathError extends Error {
@@ -12,8 +12,8 @@ export abstract class DependencyPathError extends Error {
     this.#path = [leaf];
   }
 
-  /** Accumulated tokens, root-to-leaf. */
-  protected get path(): readonly Token[] {
+  /** Full dependency path, root-to-leaf. */
+  get path(): readonly Token[] {
     return this.#path;
   }
 
