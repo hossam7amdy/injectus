@@ -1,22 +1,22 @@
 import { type Binding, CIRCULAR, EMPTY, makeBinding } from "./binding.ts";
-import { getInjectionContext, inject, setInjectionContext } from "./context.ts";
+import {
+  type Injector as ContextInjector,
+  getInjectionContext,
+  type InjectOptions,
+  inject,
+  setInjectionContext,
+} from "./context.ts";
 import { disposerOf, isDisposable } from "./disposable.ts";
 import {
   CaptiveDependencyError,
   CircularDependencyError,
+  DependencyPathError,
   InjectorDisposedError,
-  prependTokenToDependencyPath,
   TokenNotFoundError,
 } from "./errors.ts";
 import { Lifetime, minLifetime } from "./lifetime.ts";
 import type { Provider } from "./provider.ts";
 import type { Token } from "./token.ts";
-
-/** Options for `injector.resolve()`. */
-export interface InjectOptions {
-  /** Return `null` instead of throwing when the token has no provider. */
-  optional?: boolean;
-}
 
 /** Options passed to `Injector.create()`. */
 export interface InjectorOptions {
@@ -43,16 +43,16 @@ export interface InjectorOptions {
  * const child = Injector.create({ providers: [RequestLogger], parent: root });
  * child.resolve(RequestLogger); // gets Database from root
  */
-export class Injector implements AsyncDisposable {
-  private readonly bindings: Map<Token, Binding>;
-  private readonly disposers: Array<() => void | Promise<void>>;
+export class Injector implements ContextInjector, AsyncDisposable {
+  readonly #bindings: Map<Token, Binding>;
+  readonly #disposers: Array<() => void | Promise<void>>;
 
   /** Parent injector, or `null` for root injectors. */
   readonly parent: Injector | null;
   /** Debug label assigned at creation. Appears in error messages. */
   readonly name: string;
 
-  private disposing: Promise<void> | null;
+  #disposing: Promise<void> | null;
 
   /** @internal Prefer `Injector.create()`. */
   constructor(
@@ -62,16 +62,16 @@ export class Injector implements AsyncDisposable {
     defaultLifetime: Lifetime,
   ) {
     if (parent != null) throwIfDisposed(parent);
-    this.bindings = new Map();
-    this.disposers = [];
+    this.#bindings = new Map();
+    this.#disposers = [];
     this.parent = parent;
     this.name = name;
-    this.disposing = null;
+    this.#disposing = null;
 
     for (const provider of providers) {
       const token =
         typeof provider === "function" ? provider : provider.provide;
-      this.bindings.set(token, providerToBinding(provider, defaultLifetime));
+      this.#bindings.set(token, providerToBinding(provider, defaultLifetime));
     }
   }
 
@@ -124,7 +124,7 @@ export class Injector implements AsyncDisposable {
           EMPTY,
           Lifetime.Scoped,
         );
-        this.bindings.set(token, scopedBinding);
+        this.#bindings.set(token, scopedBinding);
         return this.hydrate(token, scopedBinding, options) as T;
       }
 
@@ -140,7 +140,7 @@ export class Injector implements AsyncDisposable {
     let s: Injector | null = this;
     while (s !== null) {
       throwIfDisposed(s);
-      const b = s.bindings.get(token);
+      const b = s.#bindings.get(token);
       if (b !== undefined) {
         return { binding: b, injector: s };
       }
@@ -178,11 +178,8 @@ export class Injector implements AsyncDisposable {
       instance = binding.factory!(options);
     } catch (e) {
       binding.value = EMPTY;
-      if (
-        e instanceof CaptiveDependencyError ||
-        e instanceof CircularDependencyError
-      ) {
-        prependTokenToDependencyPath(e, token, lifetime);
+      if (e instanceof DependencyPathError) {
+        DependencyPathError.prepend(e, token);
       }
       throw e;
     }
@@ -192,7 +189,7 @@ export class Injector implements AsyncDisposable {
     } else {
       binding.value = instance;
       if (isDisposable(instance)) {
-        this.disposers.push(() => disposerOf(instance));
+        this.#disposers.push(() => disposerOf(instance));
       }
     }
 
@@ -205,21 +202,21 @@ export class Injector implements AsyncDisposable {
    * On failure: a single error is rethrown as-is; multiple are wrapped in `AggregateError`.
    */
   dispose(): Promise<void> {
-    if (this.disposing) return this.disposing;
-    this.disposing = (async () => {
+    if (this.#disposing) return this.#disposing;
+    this.#disposing = (async () => {
       const errors: unknown[] = [];
 
       // LIFO so consumers dispose before their deps.
-      for (let i = this.disposers.length - 1; i >= 0; i--) {
+      for (let i = this.#disposers.length - 1; i >= 0; i--) {
         try {
-          await this.disposers[i]!();
+          await this.#disposers[i]!();
         } catch (e) {
           errors.push(e);
         }
       }
 
-      this.disposers.length = 0;
-      this.bindings.clear();
+      this.#disposers.length = 0;
+      this.#bindings.clear();
 
       if (errors.length === 1) throw errors[0];
       if (errors.length > 1) {
@@ -229,7 +226,7 @@ export class Injector implements AsyncDisposable {
         );
       }
     })();
-    return this.disposing;
+    return this.#disposing;
   }
 
   /** Alias for `dispose()` — enables `await using injector = Injector.create(...)`. */
@@ -239,7 +236,7 @@ export class Injector implements AsyncDisposable {
 
   /** `true` after `dispose()` has been called, even if disposal threw. */
   get disposed(): boolean {
-    return this.disposing !== null;
+    return this.#disposing !== null;
   }
 }
 

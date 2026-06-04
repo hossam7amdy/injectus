@@ -1,7 +1,19 @@
 import { InjectionContextError } from "./errors.ts";
-import type { InjectOptions, Injector } from "./injector.ts";
 import type { Lifetime } from "./lifetime.ts";
 import type { Token } from "./token.ts";
+
+/** Options for `injector.resolve()`. */
+export interface InjectOptions {
+  /** Return `null` instead of throwing when the token has no provider. */
+  optional?: boolean;
+}
+
+/** @internal Resolve-facing view of `Injector` consumed by the injection context. */
+export interface Injector {
+  resolve<T>(token: Token<T>): T;
+  resolve<T>(token: Token<T>, options: { optional: true }): T | null;
+  resolve<T>(token: Token<T>, options?: InjectOptions): T | null;
+}
 
 export interface InjectionContext {
   injector: Injector;

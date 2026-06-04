@@ -4,12 +4,11 @@ import { describe, it } from "node:test";
 import {
   CaptiveDependencyError,
   CircularDependencyError,
+  DependencyPathError,
   InjectionContextError,
   InjectorDisposedError,
-  prependTokenToDependencyPath,
   TokenNotFoundError,
 } from "../errors.ts";
-import { Lifetime } from "../lifetime.ts";
 import { InjectionToken } from "../token.ts";
 import { TEST_OPTIONS } from "./test.config.ts";
 
@@ -25,17 +24,17 @@ describe("errors — TokenNotFoundError", TEST_OPTIONS, () => {
 });
 
 describe("errors — CircularDependencyError", TEST_OPTIONS, () => {
-  it("starts with chain = [leaf]", () => {
+  it("renders the leaf in the message", () => {
     const err = new CircularDependencyError(T);
-    assert.deepEqual(err.chain, [T]);
+    assert.match(err.message, /Circular dependency: InjectionToken\(T\)\./);
     assert.equal(err.name, "CircularDependencyError");
   });
 
-  it("renders chain in message", () => {
+  it("renders the prepended path root-to-leaf", () => {
     const A = new InjectionToken<number>("A");
     const B = new InjectionToken<number>("B");
     const err = new CircularDependencyError(A);
-    err.chain.unshift(B);
+    DependencyPathError.prepend(err, B);
     assert.match(
       err.message,
       /Circular dependency: InjectionToken\(B\) -> InjectionToken\(A\)\./,
@@ -44,59 +43,38 @@ describe("errors — CircularDependencyError", TEST_OPTIONS, () => {
 });
 
 describe("errors — CaptiveDependencyError", TEST_OPTIONS, () => {
-  it("dependency getter returns chain tail", () => {
+  it("labels the scoped dependency in the message", () => {
     const err = new CaptiveDependencyError(T);
-    assert.equal(err.dependency, T);
+    assert.match(err.message, /InjectionToken\(T\) \(scoped\)/);
     assert.equal(err.name, "CaptiveDependencyError");
   });
 
-  it("uses '<singleton>' placeholder when unset", () => {
-    const err = new CaptiveDependencyError(T);
-    assert.match(err.message, /<singleton>/);
-  });
-
-  it("names consumer once set", () => {
-    class Owner {}
-    const err = new CaptiveDependencyError(T);
-    err.consumer = Owner;
-    assert.match(err.message, /Owner \(singleton\)/);
-    assert.match(err.message, /InjectionToken\(T\) \(scoped\)/);
+  it("renders the prepended path root-to-leaf", () => {
+    const Scoped = new InjectionToken<number>("Scoped");
+    const Sing = new InjectionToken<number>("Sing");
+    const err = new CaptiveDependencyError(Scoped);
+    DependencyPathError.prepend(err, Sing);
+    assert.match(err.message, /InjectionToken\(Scoped\) \(scoped\)/);
+    assert.match(
+      err.message,
+      /Chain: InjectionToken\(Sing\) -> InjectionToken\(Scoped\)\./,
+    );
   });
 });
 
-describe("errors — prependTokenToDependencyPath", TEST_OPTIONS, () => {
-  it("prepends to circular chain", () => {
-    const A = new InjectionToken<number>("A");
-    const B = new InjectionToken<number>("B");
-    const err = new CircularDependencyError(B);
-    prependTokenToDependencyPath(err, A, Lifetime.Singleton);
-    assert.deepEqual(err.chain, [A, B]);
-  });
-
-  it("sets consumer at first singleton frame", () => {
+describe("errors — DependencyPathError.prepend", TEST_OPTIONS, () => {
+  it("prepends across multiple frames in order", () => {
     const Scoped = new InjectionToken<number>("Scoped");
-    const TransientToken = new InjectionToken<number>("TT");
-    const Sing = new InjectionToken<number>("Sing");
-    const err = new CaptiveDependencyError(Scoped);
-
-    prependTokenToDependencyPath(err, TransientToken, Lifetime.Transient);
-    assert.equal(err.consumer, undefined);
-    assert.deepEqual(err.chain, [TransientToken, Scoped]);
-
-    prependTokenToDependencyPath(err, Sing, Lifetime.Singleton);
-    assert.equal(err.consumer, Sing);
-    assert.deepEqual(err.chain, [Sing, TransientToken, Scoped]);
-  });
-
-  it("does not overwrite consumer", () => {
-    const Scoped = new InjectionToken<number>("Scoped");
-    const Inner = new InjectionToken<number>("Inner");
+    const Mid = new InjectionToken<number>("Mid");
     const Outer = new InjectionToken<number>("Outer");
     const err = new CaptiveDependencyError(Scoped);
 
-    prependTokenToDependencyPath(err, Inner, Lifetime.Singleton);
-    prependTokenToDependencyPath(err, Outer, Lifetime.Singleton);
-    assert.equal(err.consumer, Inner);
+    DependencyPathError.prepend(err, Mid);
+    DependencyPathError.prepend(err, Outer);
+    assert.match(
+      err.message,
+      /Chain: InjectionToken\(Outer\) -> InjectionToken\(Mid\) -> InjectionToken\(Scoped\)\./,
+    );
   });
 });
 

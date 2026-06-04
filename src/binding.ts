@@ -1,4 +1,4 @@
-import type { InjectOptions } from "./injector.ts";
+import type { InjectOptions } from "./context.ts";
 import type { Lifetime } from "./lifetime.ts";
 
 /** No cached value yet. */

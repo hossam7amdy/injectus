@@ -148,7 +148,7 @@ describe("captive dependency — allowed combinations", TEST_OPTIONS, () => {
 });
 
 describe("captive dependency — error metadata", TEST_OPTIONS, () => {
-  it("names innermost singleton as consumer", () => {
+  it("renders the full path through nested singletons", () => {
     class C {}
     class B {
       c = inject(C);
@@ -171,12 +171,11 @@ describe("captive dependency — error metadata", TEST_OPTIONS, () => {
       caught = e as CaptiveDependencyError;
     }
     assert.ok(caught instanceof CaptiveDependencyError);
-    assert.equal(caught.consumer, B);
-    assert.equal(caught.dependency, C);
-    assert.deepEqual(caught.chain, [A, B, C]);
+    assert.match(caught.message, /C \(scoped\)/);
+    assert.match(caught.message, /Chain: A -> B -> C\./);
   });
 
-  it("names outer singleton across transient", () => {
+  it("renders the full path across a transient", () => {
     class C {}
     class T {
       c = inject(C);
@@ -199,9 +198,8 @@ describe("captive dependency — error metadata", TEST_OPTIONS, () => {
       caught = e as CaptiveDependencyError;
     }
     assert.ok(caught instanceof CaptiveDependencyError);
-    assert.equal(caught.consumer, A);
-    assert.equal(caught.dependency, C);
-    assert.deepEqual(caught.chain, [A, T, C]);
+    assert.match(caught.message, /C \(scoped\)/);
+    assert.match(caught.message, /Chain: A -> T -> C\./);
   });
 
   it("message reflects prepended chain", () => {

@@ -123,7 +123,7 @@ describe("circular dependency — singleton graphs", TEST_OPTIONS, () => {
     assert.doesNotThrow(() => injector.resolve(A));
   });
 
-  it("chain is root-to-leaf", () => {
+  it("message renders the path root-to-leaf", () => {
     class A {
       b = inject(B);
     }
@@ -143,7 +143,7 @@ describe("circular dependency — singleton graphs", TEST_OPTIONS, () => {
       caught = e as CircularDependencyError;
     }
     assert.ok(caught instanceof CircularDependencyError);
-    assert.deepEqual(caught.chain, [A, B, A]);
+    assert.match(caught.message, /Circular dependency: A -> B -> A\./);
   });
 });
 

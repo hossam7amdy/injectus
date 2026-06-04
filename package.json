@@ -2,7 +2,7 @@
   "name": "injectus",
   "version": "0.1.1-alpha.0",
   "type": "module",
-  "description": "High-performant, decorator-free IoC container for Node.js — sync inject(), explicit lifetimes, TC39-native disposal.",
+  "description": "High-performance, decorator-free IoC container for Node.js — sync inject(), explicit lifetimes, TC39-native disposal.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

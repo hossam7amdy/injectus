@@ -1,5 +1,53 @@
-import { Lifetime } from "./lifetime.ts";
 import { type Token, tokenName } from "./token.ts";
+
+/**
+ * @internal Base for errors that accumulate a dependency path as the exception
+ * unwinds through nested `hydrate()` frames.
+ */
+export abstract class DependencyPathError extends Error {
+  readonly #path: Token[];
+
+  constructor(leaf: Token) {
+    super();
+    this.#path = [leaf];
+  }
+
+  /** Accumulated tokens, root-to-leaf. */
+  protected get path(): readonly Token[] {
+    return this.#path;
+  }
+
+  /** Prepend `token` to `error`'s path as the exception unwinds one frame. */
+  static prepend(error: DependencyPathError, token: Token): void {
+    error.#path.unshift(token);
+  }
+}
+
+/** Thrown when a cycle is detected in the dependency graph. The message renders the full path root-to-leaf. */
+export class CircularDependencyError extends DependencyPathError {
+  override readonly name = "CircularDependencyError";
+
+  override get message(): string {
+    return `Circular dependency: ${this.path.map(tokenName).join(" -> ")}.`;
+  }
+}
+
+/**
+ * Thrown when a singleton holds — directly or transitively — a scoped dependency.
+ * The message labels the scoped dependency and renders the full path root-to-leaf.
+ */
+export class CaptiveDependencyError extends DependencyPathError {
+  override readonly name = "CaptiveDependencyError";
+
+  override get message(): string {
+    const path = this.path;
+    const scoped = tokenName(path[path.length - 1]!);
+    return (
+      `Captive dependency: ${scoped} (scoped) cannot live inside a singleton. ` +
+      `Chain: ${path.map(tokenName).join(" -> ")}.`
+    );
+  }
+}
 
 /** Thrown when no provider is registered for a token. */
 export class TokenNotFoundError extends Error {
@@ -12,68 +60,6 @@ export class TokenNotFoundError extends Error {
   }
 }
 
-/** Thrown when a cycle is detected in the dependency graph. `chain` is filled root-to-leaf. */
-export class CircularDependencyError extends Error {
-  override readonly name = "CircularDependencyError";
-  readonly chain: Token[];
-
-  constructor(leaf: Token) {
-    super();
-    this.chain = [leaf];
-  }
-
-  override get message(): string {
-    return `Circular dependency: ${this.chain.map(tokenName).join(" -> ")}.`;
-  }
-}
-
-/**
- * Thrown when a singleton holds — directly or transitively — a scoped dependency.
- * `consumer` is the innermost singleton in the chain; `chain` is the full path root-to-leaf.
- */
-export class CaptiveDependencyError extends Error {
-  override readonly name = "CaptiveDependencyError";
-  consumer: Token | undefined;
-  readonly chain: Token[];
-
-  constructor(dependency: Token) {
-    super();
-    this.consumer = undefined;
-    this.chain = [dependency];
-  }
-
-  override get message(): string {
-    const consumerName =
-      this.consumer !== undefined ? tokenName(this.consumer) : "<singleton>";
-    return (
-      `Captive dependency: ${consumerName} (singleton) depends on ` +
-      `${tokenName(this.dependency)} (scoped). ` +
-      `A scoped instance cannot live inside a singleton. ` +
-      `Chain: ${this.chain.map(tokenName).join(" -> ")}.`
-    );
-  }
-
-  get dependency(): Token {
-    return this.chain[this.chain.length - 1]!;
-  }
-}
-
-/** @internal Prepend `token` to `error.chain`; set `consumer` on the first Singleton frame. */
-export function prependTokenToDependencyPath(
-  error: CaptiveDependencyError | CircularDependencyError,
-  token: Token,
-  lifetime: Lifetime,
-): void {
-  error.chain.unshift(token);
-  if (
-    error instanceof CaptiveDependencyError &&
-    error.consumer === undefined &&
-    lifetime === Lifetime.Singleton
-  ) {
-    error.consumer = token;
-  }
-}
-
 /** Thrown when `inject()` is called outside an active injection context. */
 export class InjectionContextError extends Error {
   override readonly name = "InjectionContextError";
@@ -81,7 +67,7 @@ export class InjectionContextError extends Error {
   constructor(token: Token) {
     super(
       `inject(${tokenName(token)}) called outside an injection context. ` +
-        `inject() may only run synchronously inside a factory or class constructor invoked by an Injector.`,
+        `inject() may only run synchronously inside a factory or class field initializer invoked by an Injector.`,
     );
   }
 }

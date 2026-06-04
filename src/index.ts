@@ -1,5 +1,6 @@
 // Injection context
 export {
+  type InjectOptions,
   inject,
   withInjector,
 } from "./context.ts";
@@ -13,7 +14,6 @@ export {
 } from "./errors.ts";
 // Injector
 export {
-  type InjectOptions,
   Injector,
   type InjectorOptions,
 } from "./injector.ts";

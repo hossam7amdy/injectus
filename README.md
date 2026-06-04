@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/injectus.svg?maxAge=1000)](https://www.npmjs.com/package/injectus)
 [![CI](https://github.com/hossam7amdy/injectus/actions/workflows/ci.yaml/badge.svg)](https://github.com/hossam7amdy/injectus/actions/workflows/ci.yaml)
 [![coveralls](https://coveralls.io/repos/github/hossam7amdy/injectus/badge.svg)](https://coveralls.io/github/hossam7amdy/injectus)
-[![npm](https://img.shields.io/npm/l/injectus.svg?maxAge=1000)](https://github.com/hossam7amdy/injectus/blob/master/LICENSE.md)
+[![npm](https://img.shields.io/npm/l/injectus.svg?maxAge=1000)](https://github.com/hossam7amdy/injectus/blob/main/LICENSE)
 [![node](https://img.shields.io/node/v/injectus.svg?maxAge=1000)](https://www.npmjs.com/package/injectus)
 
 Zero-dependency, decorator-free IoC container for Node.js.
@@ -24,7 +24,7 @@ class UserService {
   }
 }
 
-await using injector = Injector.create({
+const injector = Injector.create({
   providers: [
     { provide: DB_URL, useValue: "postgres://localhost/app" },
     Database,
@@ -33,6 +33,8 @@ await using injector = Injector.create({
 });
 
 injector.resolve(UserService).findAll();
+
+await injector.dispose();
 ```
 
 ## Install
@@ -50,6 +52,8 @@ yarn add injectus
 ```
 
 **Requires Node.js ≥ 22.6.0.** The library uses `Symbol.asyncDispose` (TC39 Explicit Resource Management) and ships as native ESM. No browser support — designed for server-side use where synchronous resolution is a guarantee.
+
+> **`await using` requires Node.js ≥ 24.** The `await using` syntax is a parse-time feature unavailable on Node 22.x. On Node 22 use the equivalent manual form: `const injector = Injector.create(...)` followed by `await injector.dispose()`.
 
 > **Design note:** The functional `inject()` API is directly inspired by Angular's modern DI (v14+). Everything else is stripped for the backend: no zone.js, no component trees, no async factories — just plain injectors, explicit lifetimes, and safe disposal.
 
@@ -255,10 +259,10 @@ const injector = Injector.create({
 | `TokenNotFoundError`      | No provider registered for the token                           |
 | `CircularDependencyError` | Cycle in the dependency graph (`A → B → A`)                    |
 | `CaptiveDependencyError`  | Singleton holds a Scoped dependency (directly or transitively) |
-| `InjectionContextError`   | `inject()` called outside a factory or constructor             |
+| `InjectionContextError`   | `inject()` called outside a factory or field initializer       |
 | `InjectorDisposedError`   | Resolved from a disposed injector, or ancestor was disposed    |
 
-`CircularDependencyError` and `CaptiveDependencyError` carry a `chain: Token[]` with the full dependency path root-to-leaf.
+`CircularDependencyError` and `CaptiveDependencyError` render the full dependency path root-to-leaf in their `message`.
 
 ---
 
