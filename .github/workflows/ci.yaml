@@ -17,7 +17,7 @@ jobs:
   ci:
     name: Lint, Test & Build (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 1
     strategy:
       fail-fast: true
       matrix:
@@ -48,4 +48,9 @@ jobs:
         run: pnpm typecheck
 
       - name: Test coverage
+        if: matrix.node != 22
         run: pnpm test:cov
+
+      - name: Test
+        if: matrix.node == 22
+        run: pnpm test
