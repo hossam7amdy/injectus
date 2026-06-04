@@ -128,8 +128,6 @@ export type Contracts = [
   Expect<
     Equal<ConstructorParameters<typeof TokenNotFoundError>, [Token, string]>
   >,
-  Expect<Equal<TokenNotFoundError["token"], Token>>,
-  Expect<Equal<TokenNotFoundError["injectorName"], string>>,
   Expect<TokenNotFoundError extends Error ? true : false>,
   Expect<Equal<ConstructorParameters<typeof CircularDependencyError>, [Token]>>,
   Expect<Equal<CircularDependencyError["chain"], Token[]>>,
@@ -140,10 +138,8 @@ export type Contracts = [
   Expect<Equal<CaptiveDependencyError["dependency"], Token>>,
   Expect<CaptiveDependencyError extends Error ? true : false>,
   Expect<Equal<ConstructorParameters<typeof InjectionContextError>, [Token]>>,
-  Expect<Equal<InjectionContextError["token"], Token>>,
   Expect<InjectionContextError extends Error ? true : false>,
   Expect<Equal<ConstructorParameters<typeof InjectorDisposedError>, [string]>>,
-  Expect<Equal<InjectorDisposedError["injectorName"], string>>,
   Expect<InjectorDisposedError extends Error ? true : false>,
 ];
 

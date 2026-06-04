@@ -4,15 +4,11 @@ import { type Token, tokenName } from "./token.ts";
 /** Thrown when no provider is registered for a token. */
 export class TokenNotFoundError extends Error {
   override readonly name = "TokenNotFoundError";
-  readonly token: Token;
-  readonly injectorName: string;
 
   constructor(token: Token, name: string) {
     super(
       `No provider registered for ${tokenName(token)} (Injector: "${name}").`,
     );
-    this.token = token;
-    this.injectorName = name;
   }
 }
 
@@ -81,24 +77,20 @@ export function prependTokenToDependencyPath(
 /** Thrown when `inject()` is called outside an active injection context. */
 export class InjectionContextError extends Error {
   override readonly name = "InjectionContextError";
-  readonly token: Token;
 
   constructor(token: Token) {
     super(
       `inject(${tokenName(token)}) called outside an injection context. ` +
         `inject() may only run synchronously inside a factory or class constructor invoked by an Injector.`,
     );
-    this.token = token;
   }
 }
 
 /** Thrown when an operation is attempted on a disposed injector. */
 export class InjectorDisposedError extends Error {
   override readonly name = "InjectorDisposedError";
-  readonly injectorName: string;
 
   constructor(name: string) {
     super(`Injector "${name}" has been disposed.`);
-    this.injectorName = name;
   }
 }

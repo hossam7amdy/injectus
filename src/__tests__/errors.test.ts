@@ -21,8 +21,6 @@ describe("errors — TokenNotFoundError", TEST_OPTIONS, () => {
     assert.match(err.message, /InjectionToken\(T\)/);
     assert.match(err.message, /"root"/);
     assert.equal(err.name, "TokenNotFoundError");
-    assert.equal(err.token, T);
-    assert.equal(err.injectorName, "root");
   });
 });
 
@@ -108,7 +106,6 @@ describe("errors — InjectionContextError", TEST_OPTIONS, () => {
     assert.match(err.message, /InjectionToken\(T\)/);
     assert.match(err.message, /injection context/);
     assert.equal(err.name, "InjectionContextError");
-    assert.equal(err.token, T);
   });
 });
 
@@ -117,6 +114,5 @@ describe("errors — InjectorDisposedError", TEST_OPTIONS, () => {
     const err = new InjectorDisposedError("request");
     assert.match(err.message, /"request"/);
     assert.equal(err.name, "InjectorDisposedError");
-    assert.equal(err.injectorName, "request");
   });
 });
