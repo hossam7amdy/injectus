@@ -55,3 +55,7 @@ jobs:
       - name: Test coverage (Node 22)
         if: matrix.node == 22
         run: pnpm test:cov:node22
+
+      - name: Coveralls
+        if: matrix.node == 'current'
+        uses: coverallsapp/github-action@v2.3.6
