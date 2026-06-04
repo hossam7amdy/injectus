@@ -16,11 +16,11 @@ import { TEST_OPTIONS } from "./test.config.ts";
 describe("resolution — synchronous contract", TEST_OPTIONS, () => {
   it("returns plain value, never thenable", () => {
     const T = new InjectionToken<{ v: number }>("svc");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: T, useValue: { v: 1 } }],
     });
 
-    const result = scope.resolve(T);
+    const result = injector.resolve(T);
 
     assert.equal(result instanceof Promise, false);
     assert.notEqual(typeof result, "function");
@@ -35,7 +35,7 @@ describe("resolution — synchronous contract", TEST_OPTIONS, () => {
   it("useFactory runs synchronously during resolve()", () => {
     const T = new InjectionToken<number>("T");
     let ran = false;
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -49,7 +49,7 @@ describe("resolution — synchronous contract", TEST_OPTIONS, () => {
     });
 
     assert.equal(ran, false, "factory must not run before resolve()");
-    const value = scope.resolve(T);
+    const value = injector.resolve(T);
     assert.equal(
       ran,
       true,
@@ -66,13 +66,13 @@ describe("resolution — synchronous contract", TEST_OPTIONS, () => {
         this.ready = true;
       })();
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Connection, useClass: Connection, lifetime: "singleton" },
       ],
     });
 
-    const conn = scope.resolve(Connection);
+    const conn = injector.resolve(Connection);
     assert.equal(conn.ready, false);
   });
 });
@@ -86,7 +86,7 @@ describe("resolution — inject() in factories & fields", TEST_OPTIONS, () => {
         this.url = url;
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: CONFIG, useValue: { url: "https://example.com" } },
         {
@@ -95,7 +95,7 @@ describe("resolution — inject() in factories & fields", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.equal(scope.resolve(Client).url, "https://example.com");
+    assert.equal(injector.resolve(Client).url, "https://example.com");
   });
 
   it("resolves inject() in class field", () => {
@@ -105,13 +105,13 @@ describe("resolution — inject() in factories & fields", TEST_OPTIONS, () => {
     class Service {
       logger = inject(Logger);
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Logger, useClass: Logger },
         { provide: Service, useClass: Service },
       ],
     });
-    const svc = scope.resolve(Service);
+    const svc = injector.resolve(Service);
     assert.ok(svc.logger instanceof Logger);
   });
 
@@ -119,7 +119,7 @@ describe("resolution — inject() in factories & fields", TEST_OPTIONS, () => {
     const C = new InjectionToken<string>("c");
     const B = new InjectionToken<{ c: string }>("b");
     const A = new InjectionToken<{ b: { c: string } }>("a");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: C, useValue: "leaf" },
         {
@@ -134,47 +134,49 @@ describe("resolution — inject() in factories & fields", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.equal(scope.resolve(A).b.c, "leaf");
+    assert.equal(injector.resolve(A).b.c, "leaf");
   });
 });
 
 describe("resolution — unknown token", TEST_OPTIONS, () => {
   it("throws on unregistered token", () => {
-    const scope = Injector.create({ providers: [] });
+    const injector = Injector.create({ providers: [] });
     assert.throws(
-      () => scope.resolve(new InjectionToken("missing")),
+      () => injector.resolve(new InjectionToken("missing")),
       TokenNotFoundError,
     );
   });
 
   it("optional returns null for unregistered", () => {
-    const scope = Injector.create({ providers: [] });
+    const injector = Injector.create({ providers: [] });
     assert.equal(
-      scope.resolve(new InjectionToken("missing"), { optional: true }),
+      injector.resolve(new InjectionToken("missing"), { optional: true }),
       null,
     );
   });
 
   it("optional returns value for registered", () => {
     const T = new InjectionToken<number>("T");
-    const scope = Injector.create({ providers: [{ provide: T, useValue: 7 }] });
-    assert.equal(scope.resolve(T, { optional: true }), 7);
+    const injector = Injector.create({
+      providers: [{ provide: T, useValue: 7 }],
+    });
+    assert.equal(injector.resolve(T, { optional: true }), 7);
   });
 
   it("optional resolve reflects registration", () => {
     const Known = new InjectionToken("K");
     const Unknown = new InjectionToken("U");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: Known, useValue: 1 }],
     });
-    assert.notEqual(scope.resolve(Known, { optional: true }), null);
-    assert.equal(scope.resolve(Unknown, { optional: true }), null);
+    assert.notEqual(injector.resolve(Known, { optional: true }), null);
+    assert.equal(injector.resolve(Unknown, { optional: true }), null);
   });
 
   it("throws on unregistered class token", () => {
     class Unregistered {}
-    const scope = Injector.create({ providers: [] });
-    assert.throws(() => scope.resolve(Unregistered), TokenNotFoundError);
+    const injector = Injector.create({ providers: [] });
+    assert.throws(() => injector.resolve(Unregistered), TokenNotFoundError);
   });
 });
 
@@ -182,7 +184,7 @@ describe("resolution — inject() and optional", TEST_OPTIONS, () => {
   it("optional returns null for missing", () => {
     const Missing = new InjectionToken<number>("missing");
     const Svc = new InjectionToken<{ dep: number | null }>("svc");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: Svc,
@@ -191,25 +193,25 @@ describe("resolution — inject() and optional", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.equal(scope.resolve(Svc).dep, null);
+    assert.equal(injector.resolve(Svc).dep, null);
   });
 
   it("optional propagates through alias", () => {
     const Missing = new InjectionToken<number>("Missing");
     const Alias = new InjectionToken<number>("Alias");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: Alias, useExisting: Missing }],
     });
-    assert.equal(scope.resolve(Alias, { optional: true }), null);
+    assert.equal(injector.resolve(Alias, { optional: true }), null);
   });
 
   it("non-optional alias throws on missing target", () => {
     const Missing = new InjectionToken<number>("Missing");
     const Alias = new InjectionToken<number>("Alias");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: Alias, useExisting: Missing }],
     });
-    assert.throws(() => scope.resolve(Alias), TokenNotFoundError);
+    assert.throws(() => injector.resolve(Alias), TokenNotFoundError);
   });
 });
 
@@ -264,7 +266,7 @@ describe("resolution — ancestor walk & shadowing", TEST_OPTIONS, () => {
     assert.equal(leaf.resolve(T), "mid");
   });
 
-  it("scoped caches on resolving scope", () => {
+  it("scoped caches on resolving injector", () => {
     class S {}
     const root = Injector.create({
       providers: [{ provide: S, useClass: S, lifetime: Lifetime.Scoped }],
@@ -397,7 +399,7 @@ describe("resolution — singleton owner-view", TEST_OPTIONS, () => {
 });
 
 describe("resolution — alias re-dispatch", TEST_OPTIONS, () => {
-  it("re-dispatches via calling scope", () => {
+  it("re-dispatches via calling injector", () => {
     class A {
       kind = "root";
     }
@@ -467,7 +469,7 @@ describe("resolution — alias re-dispatch", TEST_OPTIONS, () => {
     const Real = new InjectionToken<object>("real");
     const Alias = new InjectionToken<object>("alias");
     const counter = new Counter();
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: Real,
@@ -481,8 +483,8 @@ describe("resolution — alias re-dispatch", TEST_OPTIONS, () => {
       ],
     });
 
-    const viaAlias = scope.resolve(Alias);
-    const viaReal = scope.resolve(Real);
+    const viaAlias = injector.resolve(Alias);
+    const viaReal = injector.resolve(Real);
 
     assert.equal(viaAlias, viaReal);
     assert.equal(counter.count, 1);

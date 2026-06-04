@@ -9,7 +9,7 @@ describe("disposal — ownership", TEST_OPTIONS, () => {
   it("disposes singleton on owning injector", async () => {
     const tracker = new DisposeTracker();
     const T = new InjectionToken("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -18,8 +18,8 @@ describe("disposal — ownership", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(T);
-    await scope.dispose();
+    injector.resolve(T);
+    await injector.dispose();
     assert.equal(tracker.disposeCountOf("svc"), 1);
   });
 
@@ -71,18 +71,18 @@ describe("disposal — ownership", TEST_OPTIONS, () => {
     const tracker = new DisposeTracker();
     const value = tracker.syncDisposable("value"); // caller-created, disposable
     const T = new InjectionToken<typeof value>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: T, useValue: value }],
     });
-    scope.resolve(T);
-    await scope.dispose();
+    injector.resolve(T);
+    await injector.dispose();
     assert.equal(tracker.disposeCountOf("value"), 0);
   });
 
   it("never retains or disposes transients", async () => {
     const tracker = new DisposeTracker();
     const T = new InjectionToken("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -92,10 +92,10 @@ describe("disposal — ownership", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(T);
-    scope.resolve(T);
-    scope.resolve(T);
-    await scope.dispose();
+    injector.resolve(T);
+    injector.resolve(T);
+    injector.resolve(T);
+    await injector.dispose();
     assert.equal(tracker.startOrder.length, 0);
   });
 });
@@ -106,7 +106,7 @@ describe("disposal — order", TEST_OPTIONS, () => {
     const A = new InjectionToken("A");
     const B = new InjectionToken("B");
     const C = new InjectionToken("C");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: A,
@@ -125,10 +125,10 @@ describe("disposal — order", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(A);
-    scope.resolve(B);
-    scope.resolve(C);
-    await scope.dispose();
+    injector.resolve(A);
+    injector.resolve(B);
+    injector.resolve(C);
+    await injector.dispose();
     assert.deepEqual(tracker.startOrder, ["C", "B", "A"]);
   });
 
@@ -137,7 +137,7 @@ describe("disposal — order", TEST_OPTIONS, () => {
     const A = new InjectionToken("A");
     const B = new InjectionToken("B");
     const C = new InjectionToken("C");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         // B's short delay would let it finish first IF disposal were concurrent.
         {
@@ -157,10 +157,10 @@ describe("disposal — order", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(A);
-    scope.resolve(B);
-    scope.resolve(C);
-    await scope.dispose();
+    injector.resolve(A);
+    injector.resolve(B);
+    injector.resolve(C);
+    await injector.dispose();
 
     assert.equal(
       tracker.wasSequential,
@@ -175,7 +175,7 @@ describe("disposal — order", TEST_OPTIONS, () => {
     const A = new InjectionToken("A");
     const B = new InjectionToken("B");
     const C = new InjectionToken("C");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: A,
@@ -194,10 +194,10 @@ describe("disposal — order", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(A);
-    scope.resolve(B);
-    scope.resolve(C);
-    await scope.dispose();
+    injector.resolve(A);
+    injector.resolve(B);
+    injector.resolve(C);
+    await injector.dispose();
     assert.deepEqual(tracker.startOrder, ["C", "B", "A"]);
   });
 });
@@ -208,7 +208,7 @@ describe("disposal — failure handling", TEST_OPTIONS, () => {
     const A = new InjectionToken("A");
     const B = new InjectionToken("B");
     const C = new InjectionToken("C");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: A,
@@ -228,11 +228,11 @@ describe("disposal — failure handling", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(A);
-    scope.resolve(B);
-    scope.resolve(C);
+    injector.resolve(A);
+    injector.resolve(B);
+    injector.resolve(C);
 
-    await assert.rejects(scope.dispose(), (err: unknown) => {
+    await assert.rejects(injector.dispose(), (err: unknown) => {
       assert.ok(
         err instanceof Error,
         "dispose() must reject with the underlying error when only one handler throws",
@@ -243,7 +243,7 @@ describe("disposal — failure handling", TEST_OPTIONS, () => {
     assert.equal(tracker.disposeCountOf("A"), 1, "A still disposed");
     assert.equal(tracker.disposeCountOf("C"), 1, "C still disposed");
     assert.equal(
-      scope.disposed,
+      injector.disposed,
       true,
       "disposed flag is true even after a failed teardown",
     );
@@ -255,7 +255,7 @@ describe("disposal — failure handling", TEST_OPTIONS, () => {
     const B = new InjectionToken("B");
     const C = new InjectionToken("C");
     const D = new InjectionToken("D");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: A,
@@ -281,9 +281,9 @@ describe("disposal — failure handling", TEST_OPTIONS, () => {
         },
       ],
     });
-    for (const t of [A, B, C, D]) scope.resolve(t);
+    for (const t of [A, B, C, D]) injector.resolve(t);
 
-    await assert.rejects(scope.dispose(), (err: unknown) => {
+    await assert.rejects(injector.dispose(), (err: unknown) => {
       assert.ok(err instanceof AggregateError);
       assert.equal(err.errors.length, 2);
       return true;
@@ -300,7 +300,7 @@ describe("disposal — idempotency", TEST_OPTIONS, () => {
   it("is idempotent", async () => {
     const tracker = new DisposeTracker();
     const A = new InjectionToken("A");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: A,
@@ -309,17 +309,17 @@ describe("disposal — idempotency", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(A);
-    await scope.dispose();
-    await scope.dispose();
-    await scope.dispose();
+    injector.resolve(A);
+    await injector.dispose();
+    await injector.dispose();
+    await injector.dispose();
     assert.equal(tracker.disposeCountOf("A"), 1);
   });
 
   it("concurrent calls share one run", async () => {
     const tracker = new DisposeTracker();
     const A = new InjectionToken("A");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: A,
@@ -328,15 +328,19 @@ describe("disposal — idempotency", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(A);
-    await Promise.all([scope.dispose(), scope.dispose(), scope.dispose()]);
+    injector.resolve(A);
+    await Promise.all([
+      injector.dispose(),
+      injector.dispose(),
+      injector.dispose(),
+    ]);
     assert.equal(tracker.disposeCountOf("A"), 1);
   });
 
   it("second call after failure rejects again", async () => {
     const tracker = new DisposeTracker();
     const A = new InjectionToken("A");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: A,
@@ -346,9 +350,9 @@ describe("disposal — idempotency", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(A);
-    await assert.rejects(scope.dispose(), Error);
-    await assert.rejects(scope.dispose(), Error);
+    injector.resolve(A);
+    await assert.rejects(injector.dispose(), Error);
+    await assert.rejects(injector.dispose(), Error);
   });
 });
 
@@ -398,17 +402,19 @@ describe("disposal — non-cascading", TEST_OPTIONS, () => {
 
 describe("disposal — post-dispose access", TEST_OPTIONS, () => {
   it("disposed flag flips after dispose", async () => {
-    const scope = Injector.create({ providers: [] });
-    assert.equal(scope.disposed, false);
-    await scope.dispose();
-    assert.equal(scope.disposed, true);
+    const injector = Injector.create({ providers: [] });
+    assert.equal(injector.disposed, false);
+    await injector.dispose();
+    assert.equal(injector.disposed, true);
   });
 
   it("resolve() throws after dispose", async () => {
     const T = new InjectionToken<number>("T");
-    const scope = Injector.create({ providers: [{ provide: T, useValue: 1 }] });
-    await scope.dispose();
-    assert.throws(() => scope.resolve(T), InjectorDisposedError);
+    const injector = Injector.create({
+      providers: [{ provide: T, useValue: 1 }],
+    });
+    await injector.dispose();
+    assert.throws(() => injector.resolve(T), InjectorDisposedError);
   });
 
   it("resolve via disposed parent throws after dispose", async () => {
@@ -431,7 +437,7 @@ describe("disposal — post-dispose access", TEST_OPTIONS, () => {
   it("Symbol.asyncDispose disposes the injector", async () => {
     const tracker = new DisposeTracker();
     const T = new InjectionToken("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -440,16 +446,16 @@ describe("disposal — post-dispose access", TEST_OPTIONS, () => {
         },
       ],
     });
-    scope.resolve(T);
-    await scope[Symbol.asyncDispose]();
-    assert.equal(scope.disposed, true);
+    injector.resolve(T);
+    await injector[Symbol.asyncDispose]();
+    assert.equal(injector.disposed, true);
     assert.equal(tracker.disposeCountOf("svc"), 1);
   });
 
   it("empty injector disposes cleanly", async () => {
-    const scope = Injector.create({ providers: [] });
-    await assert.doesNotReject(scope.dispose());
-    assert.equal(scope.disposed, true);
+    const injector = Injector.create({ providers: [] });
+    await assert.doesNotReject(injector.dispose());
+    assert.equal(injector.disposed, true);
   });
 });
 
@@ -462,10 +468,10 @@ describe("disposal — explicit resource management", TEST_OPTIONS, () => {
       }
     }
     {
-      await using scope = Injector.create({
+      await using injector = Injector.create({
         providers: [{ provide: R, useClass: R }],
       });
-      scope.resolve(R);
+      injector.resolve(R);
     }
     assert.equal(disposed, true);
   });
@@ -481,15 +487,15 @@ describe("disposal — explicit resource management", TEST_OPTIONS, () => {
         throw new Error("b-fail");
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: A, useClass: A },
         { provide: B, useClass: B },
       ],
     });
-    scope.resolve(A);
-    scope.resolve(B);
-    await assert.rejects(() => scope.dispose(), AggregateError);
+    injector.resolve(A);
+    injector.resolve(B);
+    await assert.rejects(() => injector.dispose(), AggregateError);
   });
 
   it("useValue disposable is not disposed", async () => {
@@ -500,11 +506,11 @@ describe("disposal — explicit resource management", TEST_OPTIONS, () => {
         disposed = true;
       },
     };
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: RES, useValue: res }],
     });
-    scope.resolve(RES);
-    await scope.dispose();
+    injector.resolve(RES);
+    await injector.dispose();
     assert.equal(disposed, false);
   });
 });

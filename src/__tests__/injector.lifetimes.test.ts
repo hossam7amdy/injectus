@@ -9,7 +9,7 @@ describe("lifetimes — default", TEST_OPTIONS, () => {
   it("FactoryProvider defaults to singleton", () => {
     const counter = new Counter();
     const T = new InjectionToken<object>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -21,8 +21,8 @@ describe("lifetimes — default", TEST_OPTIONS, () => {
       ],
     });
 
-    const a = scope.resolve(T);
-    const b = scope.resolve(T);
+    const a = injector.resolve(T);
+    const b = injector.resolve(T);
     assert.equal(a, b, "default lifetime must cache like a singleton");
     assert.equal(counter.count, 1);
   });
@@ -34,20 +34,20 @@ describe("lifetimes — default", TEST_OPTIONS, () => {
         constructed += 1;
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: Service, useClass: Service }],
     });
 
-    assert.equal(scope.resolve(Service), scope.resolve(Service));
+    assert.equal(injector.resolve(Service), injector.resolve(Service));
     assert.equal(constructed, 1);
   });
 });
 
 describe("lifetimes — singleton", TEST_OPTIONS, () => {
-  it("shares one instance within scope", () => {
+  it("shares one instance within injector", () => {
     const counter = new Counter();
     const T = new InjectionToken<object>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -60,7 +60,7 @@ describe("lifetimes — singleton", TEST_OPTIONS, () => {
       ],
     });
 
-    assert.equal(scope.resolve(T), scope.resolve(T));
+    assert.equal(injector.resolve(T), injector.resolve(T));
     assert.equal(counter.count, 1);
   });
 
@@ -116,7 +116,7 @@ describe("lifetimes — singleton", TEST_OPTIONS, () => {
 });
 
 describe("lifetimes — scoped", TEST_OPTIONS, () => {
-  it("one instance per scope, cached", () => {
+  it("one instance per injector, cached", () => {
     const counter = new Counter();
     const T = new InjectionToken<object>("T");
     const root = Injector.create({
@@ -141,10 +141,10 @@ describe("lifetimes — scoped", TEST_OPTIONS, () => {
     assert.equal(
       a1,
       a1Again,
-      "scoped instance is cached within its child scope",
+      "scoped instance is cached within its child injector",
     );
-    assert.notEqual(a1, a2, "each child scope gets its own scoped instance");
-    assert.equal(counter.count, 2, "constructed once per resolving scope");
+    assert.notEqual(a1, a2, "each child injector gets its own scoped instance");
+    assert.equal(counter.count, 2, "constructed once per resolving injector");
   });
 
   it("child-owned scoped resolves locally", () => {
@@ -162,7 +162,7 @@ describe("lifetimes — transient", TEST_OPTIONS, () => {
   it("fresh instance per resolve", () => {
     const counter = new Counter();
     const T = new InjectionToken<object>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -175,9 +175,9 @@ describe("lifetimes — transient", TEST_OPTIONS, () => {
       ],
     });
 
-    const a = scope.resolve(T);
-    const b = scope.resolve(T);
-    const c = scope.resolve(T);
+    const a = injector.resolve(T);
+    const b = injector.resolve(T);
+    const c = injector.resolve(T);
     assert.equal(
       new Set([a, b, c]).size,
       3,

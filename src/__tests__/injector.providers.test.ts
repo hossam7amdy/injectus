@@ -9,12 +9,12 @@ describe("useValue — identity", TEST_OPTIONS, () => {
   it("returns exact object reference", () => {
     const obj = { id: Symbol("v") };
     const T = new InjectionToken<typeof obj>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: T, useValue: obj }],
     });
-    assert.equal(scope.resolve(T), obj);
+    assert.equal(injector.resolve(T), obj);
     assert.equal(
-      scope.resolve(T),
+      injector.resolve(T),
       obj,
       "repeated resolve() yields the same reference",
     );
@@ -22,10 +22,10 @@ describe("useValue — identity", TEST_OPTIONS, () => {
 
   it("carries primitive values faithfully", () => {
     const T = new InjectionToken<string>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: T, useValue: "literal" }],
     });
-    assert.equal(scope.resolve(T), "literal");
+    assert.equal(injector.resolve(T), "literal");
   });
 });
 
@@ -34,10 +34,10 @@ describe("useClass — instantiation", TEST_OPTIONS, () => {
     class Logger {
       label = "log";
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: Logger, useClass: Logger, lifetime: "singleton" }],
     });
-    const logger = scope.resolve(Logger);
+    const logger = injector.resolve(Logger);
     assert.ok(logger instanceof Logger);
     assert.equal(logger.label, "log");
   });
@@ -51,10 +51,10 @@ describe("useClass — instantiation", TEST_OPTIONS, () => {
         return "sql";
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: Repo, useClass: SqlRepo, lifetime: "singleton" }],
     });
-    const repo = scope.resolve(Repo);
+    const repo = injector.resolve(Repo);
     assert.ok(repo instanceof SqlRepo);
     assert.equal(repo.find(), "sql");
   });
@@ -66,10 +66,10 @@ describe("useClass — instantiation", TEST_OPTIONS, () => {
         argCount = args.length;
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: Service, useClass: Service }],
     });
-    scope.resolve(Service);
+    injector.resolve(Service);
     assert.equal(argCount, 0);
   });
 });
@@ -79,16 +79,16 @@ describe("useClass — shorthand", TEST_OPTIONS, () => {
     class Logger {
       label = "log";
     }
-    const scope = Injector.create({ providers: [Logger] });
-    const logger = scope.resolve(Logger);
+    const injector = Injector.create({ providers: [Logger] });
+    const logger = injector.resolve(Logger);
     assert.ok(logger instanceof Logger);
     assert.equal(logger.label, "log");
   });
 
   it("defaults to Singleton — repeated resolve yields same instance", () => {
     class Service {}
-    const scope = Injector.create({ providers: [Service] });
-    assert.equal(scope.resolve(Service), scope.resolve(Service));
+    const injector = Injector.create({ providers: [Service] });
+    assert.equal(injector.resolve(Service), injector.resolve(Service));
   });
 
   it("behaves identically to { provide, useClass } self-bind", () => {
@@ -109,13 +109,13 @@ describe("useClass — shorthand", TEST_OPTIONS, () => {
     class Consumer {
       dep = inject(Dep);
     }
-    const scope = Injector.create({ providers: [Dep, Consumer] });
-    const consumer = scope.resolve(Consumer);
+    const injector = Injector.create({ providers: [Dep, Consumer] });
+    const consumer = injector.resolve(Consumer);
     assert.ok(consumer.dep instanceof Dep);
     assert.equal(consumer.dep.value, "dep");
     assert.equal(
       consumer.dep,
-      scope.resolve(Dep),
+      injector.resolve(Dep),
       "shorthand singleton shared with direct resolve",
     );
   });
@@ -123,11 +123,11 @@ describe("useClass — shorthand", TEST_OPTIONS, () => {
   it("mixes with other provider forms in one array", () => {
     const T = new InjectionToken<string>("T");
     class Svc {}
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [Svc, { provide: T, useValue: "v" }],
     });
-    assert.ok(scope.resolve(Svc) instanceof Svc);
-    assert.equal(scope.resolve(T), "v");
+    assert.ok(injector.resolve(Svc) instanceof Svc);
+    assert.equal(injector.resolve(T), "v");
   });
 
   it("a later verbose binding overrides the shorthand", () => {
@@ -137,10 +137,10 @@ describe("useClass — shorthand", TEST_OPTIONS, () => {
     class Special extends Base {
       override kind = "special";
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [Base, { provide: Base, useClass: Special }],
     });
-    assert.equal(scope.resolve(Base).kind, "special");
+    assert.equal(injector.resolve(Base).kind, "special");
   });
 
   it("child can override an inherited shorthand binding", () => {
@@ -166,7 +166,7 @@ describe("useExisting — alias collapse", TEST_OPTIONS, () => {
     const A = new InjectionToken<object>("a");
     const B = new InjectionToken<object>("b");
     const counter = new Counter();
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: Real,
@@ -181,7 +181,11 @@ describe("useExisting — alias collapse", TEST_OPTIONS, () => {
       ],
     });
 
-    const all = [scope.resolve(Real), scope.resolve(A), scope.resolve(B)];
+    const all = [
+      injector.resolve(Real),
+      injector.resolve(A),
+      injector.resolve(B),
+    ];
     assert.equal(new Set(all).size, 1, "all aliases collapse to one instance");
     assert.equal(counter.count, 1);
   });
@@ -190,14 +194,14 @@ describe("useExisting — alias collapse", TEST_OPTIONS, () => {
     class C {}
     const A = new InjectionToken<C>("A");
     const B = new InjectionToken<C>("B");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: C, useClass: C },
         { provide: B, useExisting: C },
         { provide: A, useExisting: B },
       ],
     });
-    assert.equal(scope.resolve(A), scope.resolve(C));
+    assert.equal(injector.resolve(A), injector.resolve(C));
   });
 
   it("token alias to class yields same instance", () => {
@@ -211,14 +215,14 @@ describe("useExisting — alias collapse", TEST_OPTIONS, () => {
         return "mem";
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: MemCache, useClass: MemCache },
         { provide: ICache, useExisting: MemCache },
       ],
     });
-    const a = scope.resolve(ICache);
-    const b = scope.resolve(MemCache);
+    const a = injector.resolve(ICache);
+    const b = injector.resolve(MemCache);
     assert.equal(a, b);
     assert.ok(a instanceof MemCache);
   });
@@ -226,24 +230,24 @@ describe("useExisting — alias collapse", TEST_OPTIONS, () => {
 
 describe("registration — sealed + overrides", TEST_OPTIONS, () => {
   it("no register()/bind() exposed", () => {
-    const scope = Injector.create({ providers: [] });
-    const asRecord = scope as unknown as Record<string, unknown>;
+    const injector = Injector.create({ providers: [] });
+    const asRecord = injector as unknown as Record<string, unknown>;
     assert.equal(typeof asRecord.register, "undefined");
     assert.equal(typeof asRecord.bind, "undefined");
   });
 
   it("last duplicate wins silently", () => {
     const T = new InjectionToken<string>("T");
-    let scope!: Injector;
+    let injector!: Injector;
     assert.doesNotThrow(() => {
-      scope = Injector.create({
+      injector = Injector.create({
         providers: [
           { provide: T, useValue: "first" },
           { provide: T, useValue: "last" },
         ],
       });
     });
-    assert.equal(scope.resolve(T), "last");
+    assert.equal(injector.resolve(T), "last");
   });
 
   it("child override propagates to descendants", () => {

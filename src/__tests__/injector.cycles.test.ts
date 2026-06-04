@@ -18,28 +18,30 @@ describe("circular dependency — singleton graphs", TEST_OPTIONS, () => {
     class B {
       a = inject(A);
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: A, useClass: A },
         { provide: B, useClass: B },
       ],
     });
-    assert.throws(() => scope.resolve(A), CircularDependencyError);
+    assert.throws(() => injector.resolve(A), CircularDependencyError);
   });
 
   it("throws on self-cycle", () => {
     class X {
       self = inject(X);
     }
-    const scope = Injector.create({ providers: [{ provide: X, useClass: X }] });
-    assert.throws(() => scope.resolve(X), CircularDependencyError);
+    const injector = Injector.create({
+      providers: [{ provide: X, useClass: X }],
+    });
+    assert.throws(() => injector.resolve(X), CircularDependencyError);
   });
 
   it("throws on A->B->C->A cycle", () => {
     const A = new InjectionToken<object>("A");
     const B = new InjectionToken<object>("B");
     const C = new InjectionToken<object>("C");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: A,
@@ -58,13 +60,13 @@ describe("circular dependency — singleton graphs", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.throws(() => scope.resolve(A), CircularDependencyError);
+    assert.throws(() => injector.resolve(A), CircularDependencyError);
   });
 
   it("embeds each token name in message", () => {
     const A = new InjectionToken<object>("Alpha");
     const B = new InjectionToken<object>("Beta");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: A,
@@ -79,7 +81,7 @@ describe("circular dependency — singleton graphs", TEST_OPTIONS, () => {
       ],
     });
     assert.throws(
-      () => scope.resolve(A),
+      () => injector.resolve(A),
       (err: unknown) => {
         assert.ok(err instanceof CircularDependencyError);
         assert.match(err.message, /Alpha/);
@@ -94,7 +96,7 @@ describe("circular dependency — singleton graphs", TEST_OPTIONS, () => {
     const B = new InjectionToken<object>("B");
     const C = new InjectionToken<object>("C");
     const A = new InjectionToken<object>("A");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: D,
@@ -118,7 +120,7 @@ describe("circular dependency — singleton graphs", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.doesNotThrow(() => scope.resolve(A));
+    assert.doesNotThrow(() => injector.resolve(A));
   });
 
   it("chain is root-to-leaf", () => {
@@ -128,7 +130,7 @@ describe("circular dependency — singleton graphs", TEST_OPTIONS, () => {
     class B {
       a = inject(A);
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: A, useClass: A },
         { provide: B, useClass: B },
@@ -136,7 +138,7 @@ describe("circular dependency — singleton graphs", TEST_OPTIONS, () => {
     });
     let caught: CircularDependencyError | undefined;
     try {
-      scope.resolve(A);
+      injector.resolve(A);
     } catch (e) {
       caught = e as CircularDependencyError;
     }
@@ -149,20 +151,20 @@ describe("circular dependency — alias chains", TEST_OPTIONS, () => {
   it("throws on A->B->A alias cycle", () => {
     const A = new InjectionToken<number>("A");
     const B = new InjectionToken<number>("B");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: A, useExisting: B },
         { provide: B, useExisting: A },
       ],
     });
-    assert.throws(() => scope.resolve(A), CircularDependencyError);
+    assert.throws(() => injector.resolve(A), CircularDependencyError);
   });
 });
 
 describe("circular dependency — transient graphs", TEST_OPTIONS, () => {
   it("throws on transient self-cycle", () => {
     const T = new InjectionToken<unknown>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -171,13 +173,13 @@ describe("circular dependency — transient graphs", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.throws(() => scope.resolve(T), CircularDependencyError);
+    assert.throws(() => injector.resolve(T), CircularDependencyError);
   });
 
   it("throws on transient indirect cycle", () => {
     const T = new InjectionToken<unknown>("T");
     const T2 = new InjectionToken<unknown>("T2");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -191,13 +193,13 @@ describe("circular dependency — transient graphs", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.throws(() => scope.resolve(T), CircularDependencyError);
+    assert.throws(() => injector.resolve(T), CircularDependencyError);
   });
 
   it("sequential resolves are not flagged", () => {
     let n = 0;
     const T = new InjectionToken<number>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: T,
@@ -206,7 +208,7 @@ describe("circular dependency — transient graphs", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.equal(scope.resolve(T), 1);
-    assert.equal(scope.resolve(T), 2);
+    assert.equal(injector.resolve(T), 1);
+    assert.equal(injector.resolve(T), 2);
   });
 });

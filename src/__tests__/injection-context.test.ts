@@ -12,7 +12,7 @@ describe("inject() — valid contexts", TEST_OPTIONS, () => {
   it("works inside factory body", () => {
     const Dep = new InjectionToken<string>("dep");
     const Svc = new InjectionToken<{ dep: string }>("svc");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Dep, useValue: "wired" },
         {
@@ -22,7 +22,7 @@ describe("inject() — valid contexts", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.equal(scope.resolve(Svc).dep, "wired");
+    assert.equal(injector.resolve(Svc).dep, "wired");
   });
 
   it("works inside class field initializer", () => {
@@ -30,13 +30,13 @@ describe("inject() — valid contexts", TEST_OPTIONS, () => {
     class Service {
       readonly dep: string = inject(Dep);
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Dep, useValue: "wired" },
         { provide: Service, useClass: Service, lifetime: "singleton" },
       ],
     });
-    assert.equal(scope.resolve(Service).dep, "wired");
+    assert.equal(injector.resolve(Service).dep, "wired");
   });
 
   it("constructs class with no arguments", () => {
@@ -46,10 +46,10 @@ describe("inject() — valid contexts", TEST_OPTIONS, () => {
         argCount = args.length;
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: Service, useClass: Service }],
     });
-    scope.resolve(Service);
+    injector.resolve(Service);
     assert.equal(argCount, 0);
   });
 
@@ -57,7 +57,7 @@ describe("inject() — valid contexts", TEST_OPTIONS, () => {
     const C = new InjectionToken<string>("c");
     const B = new InjectionToken<{ c: string }>("b");
     const A = new InjectionToken<{ b: { c: string } }>("a");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: C, useValue: "leaf" },
         {
@@ -72,13 +72,13 @@ describe("inject() — valid contexts", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.equal(scope.resolve(A).b.c, "leaf");
+    assert.equal(injector.resolve(A).b.c, "leaf");
   });
 
   it("supports optional overload", () => {
     const Missing = new InjectionToken<number>("missing");
     const Svc = new InjectionToken<{ dep: number | null }>("svc");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         {
           provide: Svc,
@@ -87,7 +87,7 @@ describe("inject() — valid contexts", TEST_OPTIONS, () => {
         },
       ],
     });
-    assert.equal(scope.resolve(Svc).dep, null);
+    assert.equal(injector.resolve(Svc).dep, null);
   });
 });
 
@@ -103,7 +103,7 @@ describe("inject() — invalid contexts", TEST_OPTIONS, () => {
     const Dep = new InjectionToken<number>("dep");
     const Svc = new InjectionToken<object>("svc");
     let caught: unknown;
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Dep, useValue: 1 },
         {
@@ -123,7 +123,7 @@ describe("inject() — invalid contexts", TEST_OPTIONS, () => {
       ],
     });
 
-    scope.resolve(Svc);
+    injector.resolve(Svc);
     await sleep(10);
     assert.ok(caught instanceof InjectionContextError);
   });
@@ -132,7 +132,7 @@ describe("inject() — invalid contexts", TEST_OPTIONS, () => {
     const Dep = new InjectionToken<number>("dep");
     const Svc = new InjectionToken<object>("svc");
     let caught: unknown;
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Dep, useValue: 1 },
         {
@@ -153,7 +153,7 @@ describe("inject() — invalid contexts", TEST_OPTIONS, () => {
       ],
     });
 
-    scope.resolve(Svc);
+    injector.resolve(Svc);
     await sleep(10);
     assert.ok(caught instanceof InjectionContextError);
   });
@@ -170,15 +170,15 @@ describe("inject() — invalid contexts", TEST_OPTIONS, () => {
         }
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Dep, useValue: 1 },
         { provide: Resource, useClass: Resource, lifetime: "singleton" },
       ],
     });
 
-    scope.resolve(Resource);
-    await scope.dispose();
+    injector.resolve(Resource);
+    await injector.dispose();
     assert.ok(caught instanceof InjectionContextError);
   });
 });
@@ -196,14 +196,14 @@ describe("inject() — lifecycle boundaries", TEST_OPTIONS, () => {
         }
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Dep, useClass: Dep },
         { provide: Owner, useClass: Owner },
       ],
     });
-    scope.resolve(Owner);
-    await scope.dispose();
+    injector.resolve(Owner);
+    await injector.dispose();
     assert.ok(caught instanceof InjectionContextError);
   });
 
@@ -219,14 +219,14 @@ describe("inject() — lifecycle boundaries", TEST_OPTIONS, () => {
         }
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Dep, useClass: Dep },
         { provide: Owner, useClass: Owner },
       ],
     });
-    scope.resolve(Owner);
-    await scope.dispose();
+    injector.resolve(Owner);
+    await injector.dispose();
     assert.ok(caught instanceof InjectionContextError);
   });
 
@@ -238,13 +238,13 @@ describe("inject() — lifecycle boundaries", TEST_OPTIONS, () => {
         return inject(Dep);
       }
     }
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [
         { provide: Dep, useClass: Dep },
         { provide: Svc, useClass: Svc },
       ],
     });
-    const svc = scope.resolve(Svc);
+    const svc = injector.resolve(Svc);
     assert.ok(svc.d instanceof Dep);
     assert.throws(() => svc.lateInject(), InjectionContextError);
   });
@@ -279,20 +279,20 @@ describe("withInjector — nesting", TEST_OPTIONS, () => {
 
   it("is out-of-context after callback returns", () => {
     const T = new InjectionToken<number>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: T, useValue: 1 }],
     });
-    withInjector(scope, () => inject(T));
+    withInjector(injector, () => inject(T));
     assert.throws(() => inject(T), InjectionContextError);
   });
 
   it("restores context when callback throws", () => {
     const T = new InjectionToken<number>("T");
-    const scope = Injector.create({
+    const injector = Injector.create({
       providers: [{ provide: T, useValue: 1 }],
     });
     assert.throws(() =>
-      withInjector(scope, () => {
+      withInjector(injector, () => {
         throw new Error("boom");
       }),
     );

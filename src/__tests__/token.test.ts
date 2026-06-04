@@ -22,9 +22,11 @@ describe("InjectionToken — identity & toString", TEST_OPTIONS, () => {
     const B = new InjectionToken<number>("dup");
     assert.notEqual(A, B);
 
-    const scope = Injector.create({ providers: [{ provide: A, useValue: 1 }] });
-    assert.equal(scope.resolve(A), 1);
-    assert.throws(() => scope.resolve(B), TokenNotFoundError);
+    const injector = Injector.create({
+      providers: [{ provide: A, useValue: 1 }],
+    });
+    assert.equal(injector.resolve(A), 1);
+    assert.throws(() => injector.resolve(B), TokenNotFoundError);
   });
 });
 
