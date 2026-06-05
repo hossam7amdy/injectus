@@ -73,6 +73,30 @@ describe("captive dependency — singleton reaching scoped", TEST_OPTIONS, () =>
     assert.throws(() => child.resolve(Sing), CaptiveDependencyError);
   });
 
+  it("throws even when the scoped binding was already cached on its owner", () => {
+    const Scoped = new InjectionToken<{ id: number }>("scoped");
+    const Sing = new InjectionToken<object>("singleton");
+    const root = Injector.create({
+      providers: [
+        {
+          provide: Scoped,
+          useFactory: () => ({ id: Math.random() }),
+          lifetime: "scoped",
+        },
+        {
+          provide: Sing,
+          useFactory: () => ({ dep: inject(Scoped) }),
+          lifetime: "singleton",
+        },
+      ],
+    });
+    // Stray direct resolve caches the scoped value on root's binding.
+    root.resolve(Scoped);
+    // Captive detection must still fire — cache must not mask it.
+    const child = Injector.create({ providers: [], parent: root });
+    assert.throws(() => child.resolve(Sing), CaptiveDependencyError);
+  });
+
   it("alias inherits target lifetime", () => {
     class Scoped {}
     const IScoped = new InjectionToken<Scoped>("IScoped");
