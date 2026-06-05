@@ -36,6 +36,5 @@ export type Token<T = unknown> =
 
 /** @internal Returns a human-readable name for a token. */
 export function tokenName(token: Token): string {
-  if (token instanceof InjectionToken) return token.toString();
   return (token as Constructor).name || String(token);
 }
