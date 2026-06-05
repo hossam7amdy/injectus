@@ -86,19 +86,42 @@ Last registration for a token wins — child injectors shadow parent bindings.
 
 ## Tokens
 
-Classes are their own tokens. For interfaces, primitives, and config use `InjectionToken`:
+A token is any DI key. Three forms:
+
+**Classes** are their own tokens — `inject(Database)` resolves the `Database` binding.
+
+**`InjectionToken<T>`** — for interfaces, primitives, and config, where there is no class to key on:
 
 ```ts
 import { InjectionToken } from "injectus";
 
 const PORT = new InjectionToken<number>("PORT");
 const DB_URL = new InjectionToken<string>("DB_URL");
-abstract class Cache {
-  abstract get(k: string): string | null;
-}
 ```
 
 Two tokens with the same description are **distinct keys** — identity, not name, is the key.
+
+**Abstract classes** work as tokens directly — handy for an interface-like contract with multiple implementations. Provide a concrete class against the abstract key:
+
+```ts
+import { Injector } from "injectus";
+
+abstract class Cache {
+  abstract get(k: string): string | null;
+}
+
+class RedisCache extends Cache {
+  get(k: string) {
+    return null;
+  }
+}
+
+const injector = Injector.create({
+  providers: [{ provide: Cache, useClass: RedisCache }],
+});
+
+injector.resolve(Cache); // RedisCache instance, typed as Cache
+```
 
 ---
 

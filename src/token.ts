@@ -5,7 +5,6 @@
  * @example
  * const API_URL  = new InjectionToken<string>("API_URL");
  * const TIMEOUT  = new InjectionToken<number>("TIMEOUT");
- * abstract class Cache { abstract get(k: string): string | null; }
  */
 export class InjectionToken<T> {
   declare readonly __type: T;
