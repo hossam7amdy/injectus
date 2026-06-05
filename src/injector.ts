@@ -144,14 +144,14 @@ export class Injector implements ContextInjector, AsyncDisposable {
   private findBinding(
     token: Token,
   ): { binding: Binding; injector: Injector } | null {
-    let s: Injector | null = this;
-    while (s !== null) {
-      throwIfDisposed(s);
-      const b = s.#bindings.get(token);
-      if (b !== undefined) {
-        return { binding: b, injector: s };
+    let injector: Injector | null = this;
+    while (injector !== null) {
+      throwIfDisposed(injector);
+      const binding = injector.#bindings.get(token);
+      if (binding !== undefined) {
+        return { binding, injector };
       }
-      s = s.parent;
+      injector = injector.parent;
     }
     return null;
   }
