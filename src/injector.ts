@@ -107,18 +107,25 @@ export class Injector implements ContextInjector, AsyncDisposable {
     }
 
     const { binding, injector } = found;
-    const prev = getInjectionContext();
-    // Singleton caches on owner; factory must run under owner's chain or child shadow poisons parent cache
+    const prevLifetime = getInjectionContext()?.effectiveLifetime;
+    if (
+      prevLifetime === Lifetime.Singleton &&
+      binding.lifetime === Lifetime.Scoped
+    ) {
+      throw new CaptiveDependencyError(token);
+    }
+
+    const isNotSelf = injector !== this;
     const owner =
-      binding.lifetime === Lifetime.Singleton && injector !== this
-        ? injector
-        : this;
+      // Singleton caches on owner; factory must run under owner's chain or child shadow poisons parent cache
+      isNotSelf && binding.lifetime === Lifetime.Singleton ? injector : this;
+
     const prevInjectContext = setInjectionContext({
       injector: owner,
-      effectiveLifetime: minLifetime(binding.lifetime, prev?.effectiveLifetime),
+      effectiveLifetime: minLifetime(binding.lifetime, prevLifetime),
     });
     try {
-      if (binding.lifetime === Lifetime.Scoped && injector !== this) {
+      if (isNotSelf && binding.lifetime === Lifetime.Scoped) {
         const scopedBinding = makeBinding(
           binding.factory,
           EMPTY,
@@ -160,17 +167,6 @@ export class Injector implements ContextInjector, AsyncDisposable {
     if (binding.value !== EMPTY) {
       return binding.value;
     }
-
-    const lifetime = binding.lifetime;
-    const ctx = getInjectionContext()!;
-
-    if (
-      lifetime === Lifetime.Scoped &&
-      ctx.effectiveLifetime === Lifetime.Singleton
-    ) {
-      throw new CaptiveDependencyError(token);
-    }
-
     binding.value = CIRCULAR;
 
     let instance: unknown;
@@ -184,7 +180,7 @@ export class Injector implements ContextInjector, AsyncDisposable {
       throw e;
     }
 
-    if (lifetime === Lifetime.Transient) {
+    if (binding.lifetime === Lifetime.Transient) {
       binding.value = EMPTY;
     } else {
       binding.value = instance;
