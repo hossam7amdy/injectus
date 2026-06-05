@@ -5,6 +5,7 @@
     "allowImportingTsExtensions": false,
     "rewriteRelativeImportExtensions": true,
     "declaration": true,
+    "stripInternal": true,
     "outDir": "./dist",
     "rootDir": "./src"
   },
