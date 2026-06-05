@@ -228,7 +228,7 @@ describe("useExisting — alias collapse", TEST_OPTIONS, () => {
   });
 });
 
-describe("registration — sealed + overrides", TEST_OPTIONS, () => {
+describe("registration — overrides", TEST_OPTIONS, () => {
   it("no register()/bind() exposed", () => {
     const injector = Injector.create({ providers: [] });
     const asRecord = injector as unknown as Record<string, unknown>;

@@ -5,7 +5,6 @@
  * @example
  * const API_URL  = new InjectionToken<string>("API_URL");
  * const TIMEOUT  = new InjectionToken<number>("TIMEOUT");
- * abstract class Cache { abstract get(k: string): string | null; }
  */
 export class InjectionToken<T> {
   declare readonly __type: T;
@@ -17,6 +16,14 @@ export class InjectionToken<T> {
 
   toString(): string {
     return `InjectionToken(${this.description})`;
+  }
+
+  [Symbol.for("nodejs.util.inspect.custom")](): string {
+    return this.toString();
+  }
+
+  get [Symbol.toStringTag](): string {
+    return "InjectionToken";
   }
 }
 
@@ -36,6 +43,5 @@ export type Token<T = unknown> =
 
 /** @internal Returns a human-readable name for a token. */
 export function tokenName(token: Token): string {
-  if (token instanceof InjectionToken) return token.toString();
   return (token as Constructor).name || String(token);
 }
