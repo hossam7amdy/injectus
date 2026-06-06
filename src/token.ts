@@ -43,5 +43,5 @@ export type Token<T = unknown> =
 
 /** @internal Returns a human-readable name for a token. */
 export function tokenName(token: Token): string {
-  return (token as Constructor).name || String(token);
+  return (typeof token === "function" && token.name) || String(token);
 }
