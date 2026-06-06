@@ -54,8 +54,8 @@ export class Injector implements ContextInjector, AsyncDisposable {
 
   #disposing: Promise<void> | null;
 
-  /** @internal Prefer `Injector.create()`. */
-  constructor(
+  /** Use `Injector.create()` instead — direct construction is not supported. */
+  private constructor(
     providers: Provider[],
     name: string,
     parent: Injector | null,
