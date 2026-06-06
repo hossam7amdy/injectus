@@ -234,6 +234,13 @@ export class Injector implements ContextInjector, AsyncDisposable {
   get disposed(): boolean {
     return this.#disposing !== null;
   }
+
+  toString(): string {
+    const bindingsMessage = `bindings: ${this.#bindings.size}`;
+    const disposedMessage = `disposed: ${this.disposed}`;
+    const parentMessage = `parent: ${this.parent?.name ?? "null"}`;
+    return `Injector(${this.name}) { ${bindingsMessage}, ${disposedMessage}, ${parentMessage} }`;
+  }
 }
 
 function providerToBinding<T>(
