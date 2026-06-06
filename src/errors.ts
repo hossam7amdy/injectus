@@ -17,7 +17,7 @@ export abstract class DependencyPathError extends Error {
     return this.#path;
   }
 
-  /** Prepend `token` to `error`'s path as the exception unwinds one frame. */
+  /** @internal Prepend `token` to `error`'s path as the exception unwinds one frame. */
   static prepend(error: DependencyPathError, token: Token): void {
     error.#path.unshift(token);
   }
