@@ -17,14 +17,6 @@ export class InjectionToken<T> {
   toString(): string {
     return `InjectionToken(${this.description})`;
   }
-
-  [Symbol.for("nodejs.util.inspect.custom")](): string {
-    return this.toString();
-  }
-
-  get [Symbol.toStringTag](): string {
-    return "InjectionToken";
-  }
 }
 
 /** A concrete class constructor. */

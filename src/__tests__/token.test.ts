@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { inspect } from "node:util";
 
 import { TokenNotFoundError } from "../errors.ts";
 import { Injector } from "../injector.ts";
@@ -16,16 +15,6 @@ describe("InjectionToken — identity & toString", TEST_OPTIONS, () => {
   it("exposes the description via the readonly field", () => {
     const T = new InjectionToken<number>("ID");
     assert.equal(T.description, "ID");
-  });
-
-  it("renders via util.inspect / console.log as toString()", () => {
-    const T = new InjectionToken<number>("API_URL");
-    assert.equal(inspect(T), "InjectionToken(API_URL)");
-  });
-
-  it("reports InjectionToken as its toStringTag", () => {
-    const T = new InjectionToken<number>("API_URL");
-    assert.equal(Object.prototype.toString.call(T), "[object InjectionToken]");
   });
 
   it("two tokens with the same description are distinct identities", () => {
