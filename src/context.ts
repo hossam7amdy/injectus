@@ -1,6 +1,6 @@
 import { InjectionContextError } from "./errors.ts";
 import type { Lifetime } from "./lifetime.ts";
-import type { Token } from "./token.ts";
+import type { InjectionToken, Token } from "./token.ts";
 
 /** Options for `injector.resolve()`. */
 export interface InjectOptions {
@@ -10,6 +10,8 @@ export interface InjectOptions {
 
 /** @internal Resolve-facing view of `Injector` consumed by the injection context. */
 export interface Injector {
+  resolve<T>(token: InjectionToken<T, true>): T[];
+  resolve<T>(token: InjectionToken<T, true>, options: { optional: true }): T[];
   resolve<T>(token: Token<T>): T;
   resolve<T>(token: Token<T>, options: { optional: true }): T | null;
   resolve<T>(token: Token<T>, options?: InjectOptions): T | null;
@@ -44,17 +46,23 @@ export function setInjectionContext(
  *
  * @example
  * class UserService {
- *   db     = inject(Database);
- *   config = inject(CONFIG, { optional: true }); // null when missing
+ *   db      = inject(Database);
+ *   config  = inject(CONFIG, { optional: true }); // null when missing
+ *   plugins = inject(PLUGINS);                     // Plugin[] for a multi token
  * }
  */
+export function inject<T>(token: InjectionToken<T, true>): T[];
+export function inject<T>(
+  token: InjectionToken<T, true>,
+  options: { optional: true },
+): T[];
 export function inject<T>(token: Token<T>): T;
 export function inject<T>(
   token: Token<T>,
   options: { optional: true },
 ): T | null;
 export function inject<T>(token: Token<T>, options?: InjectOptions): T | null;
-export function inject<T>(token: Token<T>, options?: InjectOptions): T | null {
+export function inject(token: Token, options?: InjectOptions): unknown {
   const ctx = currentContext;
   if (ctx === undefined) {
     throw new InjectionContextError(token);

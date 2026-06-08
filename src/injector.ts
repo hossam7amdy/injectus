@@ -16,7 +16,7 @@ import {
 } from "./errors.ts";
 import { Lifetime, minLifetime } from "./lifetime.ts";
 import type { Provider } from "./provider.ts";
-import type { Token } from "./token.ts";
+import { InjectionToken, type Token } from "./token.ts";
 
 /** Options passed to `Injector.create()`. */
 export interface InjectorOptions {
@@ -71,7 +71,21 @@ export class Injector implements ContextInjector, AsyncDisposable {
     for (const provider of providers) {
       const token =
         typeof provider === "function" ? provider : provider.provide;
-      this.#bindings.set(token, providerToBinding(provider, defaultLifetime));
+      const binding = providerToBinding(provider, defaultLifetime);
+      if (token instanceof InjectionToken && token.multi) {
+        // Each element is a normal binding under its own internal key, so it rides
+        // the single-resolve path; the container binding indexes those keys.
+        let container = this.#bindings.get(token);
+        if (container === undefined) {
+          container = makeBinding(undefined, EMPTY, Lifetime.Transient, []);
+          this.#bindings.set(token, container);
+        }
+        const key = new InjectionToken(token.description);
+        this.#bindings.set(key, binding);
+        (container.multi as Token[]).push(key);
+      } else {
+        this.#bindings.set(token, binding);
+      }
     }
   }
 
@@ -95,11 +109,24 @@ export class Injector implements ContextInjector, AsyncDisposable {
    *
    * Walks the injector chain, respects lifetimes, and detects captive dependencies.
    * Throws `TokenNotFoundError` unless `{ optional: true }` is passed.
+   *
+   * For a multi token (`new InjectionToken(d, { multi: true })`) returns the element
+   * array, collected root-to-leaf across the chain; `{ optional: true }` yields `[]`
+   * instead of throwing when no element is registered.
    */
+  resolve<T>(token: InjectionToken<T, true>): T[];
+  resolve<T>(token: InjectionToken<T, true>, options: { optional: true }): T[];
   resolve<T>(token: Token<T>): T;
   resolve<T>(token: Token<T>, options: { optional: true }): T | null;
   resolve<T>(token: Token<T>, options?: InjectOptions): T | null;
-  resolve<T>(token: Token<T>, options?: InjectOptions): T | null {
+  resolve(token: Token, options?: InjectOptions): unknown {
+    if (token instanceof InjectionToken && token.multi) {
+      return this.resolveMulti(token, options);
+    }
+    return this.resolveSingle(token, options);
+  }
+
+  private resolveSingle(token: Token, options?: InjectOptions): unknown {
     const found = this.findBinding(token);
     if (!found) {
       if (options?.optional) return null;
@@ -132,13 +159,42 @@ export class Injector implements ContextInjector, AsyncDisposable {
           Lifetime.Scoped,
         );
         this.#bindings.set(token, scopedBinding);
-        return this.hydrate(token, scopedBinding, options) as T;
+        return this.hydrate(token, scopedBinding, options);
       }
 
-      return injector.hydrate(token, binding, options) as T;
+      return injector.hydrate(token, binding, options);
     } finally {
       setInjectionContext(prevInjectContext);
     }
+  }
+
+  /**
+   * Resolve a multi token. Collects every element key in the chain root-first, then
+   * resolves each through the single-resolve path — so per-element lifetime, captive
+   * and circular detection, scoped shadowing, and disposal all reuse the same machinery.
+   * Rebuilt on every call: the array's identity is not stable; each element's follows
+   * its own lifetime. Requires the whole chain live (a disposed ancestor throws).
+   */
+  private resolveMulti(token: Token, options?: InjectOptions): unknown[] {
+    // Build the chain root-first so ancestor elements precede descendants.
+    const chain: Injector[] = [];
+    for (let s: Injector | null = this; s !== null; s = s.parent) {
+      throwIfDisposed(s);
+      chain.unshift(s);
+    }
+
+    const keys: Token[] = [];
+    for (const owner of chain) {
+      const container = owner.#bindings.get(token);
+      // Invariant: a multi token only ever maps to a container with a key list.
+      if (container !== undefined) keys.push(...(container.multi as Token[]));
+    }
+
+    if (keys.length === 0) {
+      if (options?.optional) return [];
+      throw new TokenNotFoundError(token, this.name);
+    }
+    return keys.map((key) => this.resolveSingle(key, options));
   }
 
   private findBinding(

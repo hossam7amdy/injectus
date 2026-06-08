@@ -30,13 +30,17 @@ type Equal<A, B> =
 class Service {}
 const TOKEN_S = new InjectionToken<string>("S");
 const TOKEN_N = new InjectionToken<number>("N");
+const TOKEN_M = InjectionToken.multi<string>("M");
 
 declare const injector: Injector;
 
 const injectReq = inject(TOKEN_S);
 const injectOpt = inject(TOKEN_S, { optional: true });
+const injectMulti = inject(TOKEN_M);
 const resolveReq = injector.resolve(TOKEN_S);
 const resolveOpt = injector.resolve(TOKEN_S, { optional: true });
+const resolveMulti = injector.resolve(TOKEN_M);
+const resolveMultiOpt = injector.resolve(TOKEN_M, { optional: true });
 const runInCtx = withInjector(injector, () => 42);
 const injectorCreateChild = Injector.create({
   providers: [],
@@ -53,10 +57,14 @@ export type Contracts = [
   // ── inject ──
   Expect<Equal<typeof injectReq, string>>,
   Expect<Equal<typeof injectOpt, string | null>>,
+  Expect<Equal<typeof injectMulti, string[]>>,
   Expect<Equal<Parameters<typeof inject<string>>[0], Token<string>>>,
   // ── Injector.resolve ──
   Expect<Equal<typeof resolveReq, string>>,
   Expect<Equal<typeof resolveOpt, string | null>>,
+  // multi token resolves to an array; optional yields [] (still T[]).
+  Expect<Equal<typeof resolveMulti, string[]>>,
+  Expect<Equal<typeof resolveMultiOpt, string[]>>,
   // ── withInjector ──
   Expect<Equal<typeof runInCtx, number>>,
   // ── Lifetime literals ──
@@ -68,7 +76,7 @@ export type Contracts = [
   Expect<
     Equal<
       Token<string>,
-      | InjectionToken<string>
+      | InjectionToken<string, boolean>
       | Constructor<string>
       | (abstract new (
           ...args: never[]
@@ -77,8 +85,13 @@ export type Contracts = [
   >,
   Expect<Equal<Constructor<Service>, new (...args: never[]) => Service>>,
   Expect<Equal<InjectionToken<string>["description"], string>>,
+  Expect<Equal<InjectionToken<string>["multi"], false>>,
+  Expect<Equal<InjectionToken<string, true>["multi"], true>>,
   Expect<
-    Equal<ConstructorParameters<typeof InjectionToken>, [description: string]>
+    Equal<
+      ConstructorParameters<typeof InjectionToken>,
+      [description: string, multi?: boolean]
+    >
   >,
   // ── InjectOptions ──
   Expect<Equal<InjectOptions, { optional?: boolean }>>,
