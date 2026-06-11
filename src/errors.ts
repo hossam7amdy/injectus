@@ -80,3 +80,12 @@ export class InjectorDisposedError extends Error {
     super(`Injector "${name}" has been disposed.`);
   }
 }
+
+/** Thrown when the module import graph contains a cycle. Renders the module-name path. */
+export class ModuleCycleError extends Error {
+  override readonly name = "ModuleCycleError";
+
+  constructor(path: readonly string[]) {
+    super(`Circular module imports: ${path.join(" -> ")}.`);
+  }
+}

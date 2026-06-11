@@ -3,7 +3,9 @@ import {
   type CircularDependencyError,
   type ClassProvider,
   type Constructor,
+  compose,
   type DependencyPathError,
+  defineModule,
   type ExistingProvider,
   type FactoryProvider,
   type InjectionContextError,
@@ -14,6 +16,9 @@ import {
   type InjectorOptions,
   inject,
   type Lifetime,
+  type Module,
+  type ModuleDef,
+  type ModuleRef,
   type Provider,
   type Token,
   type TokenNotFoundError,
@@ -32,6 +37,22 @@ const TOKEN_S = new InjectionToken<string>("S");
 const TOKEN_N = new InjectionToken<number>("N");
 
 declare const injector: Injector;
+declare const moduleRef: ModuleRef;
+
+const definedModule = defineModule({
+  name: "m",
+  setup: () => [{ provide: TOKEN_S, useValue: "x" }],
+});
+const definedAsyncModule = defineModule({
+  imports: [definedModule],
+  global: true,
+  setup: async () => [{ provide: TOKEN_N, useValue: 1 }],
+});
+const composed = compose(definedModule);
+const composedWithOpts = compose(definedAsyncModule, {
+  parent: injector,
+  name: "root",
+});
 
 const injectReq = inject(TOKEN_S);
 const injectOpt = inject(TOKEN_S, { optional: true });
@@ -143,6 +164,41 @@ export type Contracts = [
   Expect<InjectionContextError extends Error ? true : false>,
   Expect<Equal<ConstructorParameters<typeof InjectorDisposedError>, [string]>>,
   Expect<InjectorDisposedError extends Error ? true : false>,
+  // ── Modules: defineModule / compose ──
+  Expect<Equal<typeof definedModule, Module>>,
+  Expect<Equal<ReturnType<typeof defineModule>, Module>>,
+  Expect<Equal<Parameters<typeof defineModule>, [def: ModuleDef]>>,
+  Expect<Equal<typeof composed, Promise<ModuleRef>>>,
+  Expect<Equal<typeof composedWithOpts, Promise<ModuleRef>>>,
+  Expect<
+    Equal<
+      Parameters<typeof compose>,
+      [root: Module, options?: { parent?: Injector; name?: string }]
+    >
+  >,
+  // ── Module (resolved blueprint) shape ──
+  Expect<Equal<Module["name"], string | undefined>>,
+  Expect<Equal<Module["imports"], readonly Module[]>>,
+  Expect<Equal<Module["global"], boolean>>,
+  Expect<Equal<Parameters<Module["setup"]>, [injector: Injector]>>,
+  Expect<Equal<ReturnType<Module["setup"]>, Provider[] | Promise<Provider[]>>>,
+  // ── ModuleDef (author input) shape ──
+  Expect<
+    Equal<
+      ModuleDef,
+      {
+        name?: string;
+        imports?: Module[];
+        global?: boolean;
+        setup?: (injector: Injector) => Provider[] | Promise<Provider[]>;
+      }
+    >
+  >,
+  // ── ModuleRef handle ──
+  Expect<Equal<ModuleRef["injector"], Injector>>,
+  Expect<Equal<ReturnType<ModuleRef["dispose"]>, Promise<void>>>,
+  Expect<ModuleRef extends AsyncDisposable ? true : false>,
+  Expect<Equal<typeof moduleRef, ModuleRef>>,
 ];
 
 export function negatives(): void {
@@ -198,4 +254,16 @@ export function negatives(): void {
 
   // @ts-expect-error: InjectionToken requires description string
   new InjectionToken<string>();
+
+  // @ts-expect-error: compose requires a root Module
+  compose();
+
+  // @ts-expect-error: imports must be Module[], not a class
+  defineModule({ imports: [Service] });
+
+  // @ts-expect-error: setup must return Provider[] (or a Promise of), not arbitrary values
+  defineModule({ setup: () => [123] });
+
+  // @ts-expect-error: global must be boolean
+  defineModule({ global: "yes" });
 }

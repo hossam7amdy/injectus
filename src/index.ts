@@ -11,6 +11,7 @@ export {
   DependencyPathError,
   InjectionContextError,
   InjectorDisposedError,
+  ModuleCycleError,
   TokenNotFoundError,
 } from "./errors.ts";
 // Injector
@@ -20,6 +21,14 @@ export {
 } from "./injector.ts";
 // Lifetimes
 export { Lifetime } from "./lifetime.ts";
+// Modules
+export {
+  compose,
+  defineModule,
+  type Module,
+  type ModuleDef,
+  type ModuleRef,
+} from "./module.ts";
 // Providers;
 export type {
   ClassProvider,
