@@ -50,6 +50,7 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test src/__tests__/*.test.ts",
+    "bench": "pnpm build && pnpm -F benchmarks bench",
     "test:watch": "node --test --watch src/__tests__/*.test.ts",
     "test:cov:node22": "node --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 \"src/__tests__/!(*.esnext).test.ts\"",
     "test:cov": "node --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info src/__tests__/*.test.ts",
