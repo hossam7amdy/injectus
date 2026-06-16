@@ -266,6 +266,28 @@ const injector = Injector.create({
 
 ---
 
+## Performance
+
+`injectus` outperforms both [awilix](https://github.com/jeffijoe/awilix) (decorator-free)
+and [tsyringe](https://github.com/microsoft/tsyringe) (decorator-based) across every
+benchmarked scenario — and allocates the least memory of all three. Each library resolves
+the same dependency-graph shape; harness is
+[mitata](https://github.com/evanwashere/mitata) in its recommended `--expose-gc` mode.
+
+| Scenario                 | `injectus` | bytes/iter | vs awilix   | vs tsyringe |
+| ------------------------ | ---------: | ---------: | :---------- | :---------- |
+| Cached singleton resolve |    22.2 ns |       41 b | 1.1× faster | 3.0× faster |
+| Transient (3-node graph) |   144.4 ns |      265 b | 1.6× faster | 2.2× faster |
+| Deep chain (depth 10)    |     545 ns |    1.06 kb | 2.1× faster | 2.3× faster |
+| Wide graph (fan-out 20)  |    1.05 µs |    1.08 kb | 1.8× faster | 2.1× faster |
+
+> Node 24 · i7-1165G7 · `--expose-gc`. Cached-singleton is the slimmest margin — ~22 ns,
+> near the measurement floor — but the win holds across runs. Ratios are the signal; absolutes
+> vary by machine. Reproduce with `pnpm bench` — full per-library tables, methodology, and
+> fairness caveats in [BENCHMARKS.md](./BENCHMARKS.md).
+
+---
+
 ## API reference
 
 ### `Injector.create(options)`

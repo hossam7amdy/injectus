@@ -1,2 +1,6 @@
+packages:
+  - benchmarks
+
 allowBuilds:
   lefthook: true
+  esbuild: true
