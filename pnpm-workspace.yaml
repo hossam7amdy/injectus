@@ -1,5 +1,6 @@
 packages:
   - benchmarks
+  - examples/*
 
 allowBuilds:
   lefthook: true
