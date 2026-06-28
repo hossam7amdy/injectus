@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { inject } from "injectus";
 
-import { NotFoundError } from "../common/http-error.ts";
+import { BadRequestError, NotFoundError } from "../common/http-error.ts";
 import { Logger } from "../common/logger.ts";
 import type { User } from "./user.model.ts";
 import { UserRepository } from "./user.repository.ts";
@@ -24,8 +24,13 @@ export class UserService {
   }
 
   create(name: string): User {
-    const user: User = { id: randomUUID(), name };
-    this.#userRepo.save(user);
+    if (!name?.trim().length) {
+      throw new BadRequestError("Invalid user name");
+    }
+    const user = this.#userRepo.save({
+      id: randomUUID(),
+      name,
+    });
     this.#logger.info(`created user ${user.id}`);
     return user;
   }

@@ -63,11 +63,24 @@ describe("users routes", { concurrency: true, timeout: 500 }, () => {
     assert.ok(list.some((user) => user.id === created.id));
   });
 
-  it("POST /users returns 500 for an unexpected error", async () => {
+  it("POST /users returns 400 for a missing or blank name", async () => {
     await using app = await startApp();
 
-    // No name → NOT NULL violation in the repository → unexpected error.
-    const res = await fetch(`${app.url}/users`, jsonPost({}));
+    const res = await fetch(`${app.url}/users`, jsonPost({ name: "   " }));
+
+    assert.equal(res.status, 400);
+    const body = (await res.json()) as { message: string };
+    assert.ok(body.message);
+  });
+
+  it("POST /users returns 500 when JSON body parsing fails", async () => {
+    await using app = await startApp();
+
+    const res = await fetch(`${app.url}/users`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{ not json",
+    });
 
     assert.equal(res.status, 500);
     const body = (await res.json()) as { message: string };

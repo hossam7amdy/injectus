@@ -16,8 +16,8 @@ export function createApp(injector?: Injector): Application {
   const app = express();
   injector ??= createAppInjector();
 
-  app.use(express.json());
   app.use(requestScope(injector));
+  app.use(express.json());
   app.use(requestLogger);
   app.use("/users", usersRouter);
   app.use(errorHandler);

@@ -16,7 +16,7 @@ usersRouter.get("/:id", (req, res) => {
 
 usersRouter.post("/", (req, res) => {
   const service = req.scope.resolve(UserService);
-  res.status(201).json(service.create(req.body.name));
+  res.status(201).json(service.create(req.body?.name));
 });
 
 export { usersRouter };
