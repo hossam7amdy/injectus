@@ -1,0 +1,19 @@
+{
+  "name": "example-express",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Express + injectus integration: per-request child injectors.",
+  "scripts": {
+    "start": "node src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/*.test.ts\""
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "injectus": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6"
+  }
+}
