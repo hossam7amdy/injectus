@@ -88,7 +88,9 @@ export type Contracts = [
   Expect<
     Equal<
       Token<string>,
-      InjectionToken<string> | Constructor<string> | { prototype: string }
+      | InjectionToken<string>
+      | Constructor<string>
+      | (Function & { prototype: string })
     >
   >,
   Expect<Equal<Constructor<Service>, new (...args: never[]) => Service>>,

@@ -29,7 +29,7 @@ export interface Constructor<T = unknown> {
 export type Token<T = unknown> =
   | Constructor<T>
   | InjectionToken<T>
-  | { prototype: T };
+  | (Function & { prototype: T });
 
 /** @internal Returns a human-readable name for a token. */
 export function tokenName(token: Token): string {
