@@ -49,6 +49,26 @@ const injectorCreateWithOpts = Injector.create({
 });
 const injectorShorthand = Injector.create({ providers: [Service] });
 
+// Classes usable only as identity keys (never constructed by the container)
+declare class WeirdParamClass {
+  constructor(...[cfg]: [cfg?: { region: string }]);
+}
+declare class PrivateCtorClass {
+  private constructor();
+  static create(): PrivateCtorClass;
+}
+const injectWeird = inject(WeirdParamClass);
+const injectPrivate = inject(PrivateCtorClass);
+const injectService = inject(Service);
+const weirdKeyProvider = {
+  provide: WeirdParamClass,
+  useFactory: () => null,
+} satisfies FactoryProvider;
+const privateKeyProvider = {
+  provide: PrivateCtorClass,
+  useFactory: () => null,
+} satisfies FactoryProvider;
+
 export type Contracts = [
   // ── inject ──
   Expect<Equal<typeof injectReq, string>>,
@@ -70,12 +90,19 @@ export type Contracts = [
       Token<string>,
       | InjectionToken<string>
       | Constructor<string>
-      | (abstract new (
-          ...args: never[]
-        ) => string)
+      | (Function & { prototype: string })
     >
   >,
   Expect<Equal<Constructor<Service>, new (...args: never[]) => Service>>,
+  // ── class-as-key: complex-param + private ctor accepted, instance type inferred ──
+  Expect<Equal<typeof injectWeird, WeirdParamClass>>,
+  Expect<Equal<typeof injectPrivate, PrivateCtorClass>>,
+  // dual-arm union must still infer a normal class precisely, not `unknown`
+  Expect<Equal<typeof injectService, Service>>,
+  Expect<Equal<(typeof weirdKeyProvider)["provide"], typeof WeirdParamClass>>,
+  Expect<
+    Equal<(typeof privateKeyProvider)["provide"], typeof PrivateCtorClass>
+  >,
   Expect<Equal<InjectionToken<string>["description"], string>>,
   Expect<
     Equal<ConstructorParameters<typeof InjectionToken>, [description: string]>
@@ -148,6 +175,9 @@ export type Contracts = [
 export function negatives(): void {
   // @ts-expect-error: token argument required
   inject();
+
+  // @ts-expect-error: primitives are not valid tokens — no construct sig, no `prototype`
+  inject(42);
 
   // @ts-expect-error: useValue must match token T (number ≠ string)
   const bad1: ValueProvider<string> = { provide: TOKEN_S, useValue: 123 };
