@@ -5,6 +5,16 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-06-29
+
+### Changed
+
+- `Token` now accepts any class as a DI key, including classes with private or
+  protected constructors and classes with complex constructor parameters, which
+  previously failed to type-check as a `provide` key or `inject()` target. The
+  internal `AbstractClass<T>` type was replaced with a generic prototype-based
+  structural type. (#10)
+
 ## [0.2.1] - 2026-06-06
 
 ### Fixed
@@ -38,6 +48,7 @@ First release out of the `alpha` prerelease line.
 
 Initial published alpha.
 
+[0.2.2]: https://github.com/hossam7amdy/injectus/releases/tag/v0.2.2
 [0.2.1]: https://github.com/hossam7amdy/injectus/releases/tag/v0.2.1
 [0.2.0]: https://github.com/hossam7amdy/injectus/releases/tag/v0.2.0
 [0.1.1-alpha.0]: https://github.com/hossam7amdy/injectus/releases/tag/v0.1.1-alpha.0
