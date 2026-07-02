@@ -4,6 +4,13 @@ A minimal [Express 5](https://expressjs.com/) app showing the canonical injectus
 integration: an **app injector** for singletons and a **per-request child
 injector** created in middleware and disposed when the response closes.
 
+> **Status:** This is a worked, tested reference pattern, not a packaged
+> adapter. Everything here — the per-request child injector, the disposal
+> hook, the captive-dependency guard — is real and covered by the
+> integration tests in this example. There's no `injectus`-provided
+> middleware to import yet; copy and adapt `request-scope.ts` into your
+> own app.
+
 ## What it shows
 
 - **App injector** — `createAppInjector(overrides?)` registers the app-lifetime

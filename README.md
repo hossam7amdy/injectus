@@ -159,6 +159,14 @@ Each injector disposes only what it constructed — disposing `req` never touche
 
 ---
 
+## Examples
+
+- [`examples/express`](./examples/express) — a full request-scoped Express
+  app: per-request child injector, captive-dependency guard in action,
+  graceful disposal on shutdown. It's a worked, tested reference pattern.
+
+---
+
 ## inject()
 
 Resolves a token through the **active injection context** — the injector currently constructing an instance. Valid only synchronously inside a `useFactory` body or a class field initializer.
