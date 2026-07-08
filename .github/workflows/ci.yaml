@@ -60,4 +60,4 @@ jobs:
         if: matrix.node == 'current'
         uses: coverallsapp/github-action@v2.3.6
         with:
-          file: ./lcov.info
+          file: ./library/lcov.info
