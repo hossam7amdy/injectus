@@ -40,7 +40,7 @@
     "url": "https://github.com/hossam7amdy/injectus/issues"
   },
   "scripts": {
-    "prebuild": "rm -rf dist",
+    "prebuild": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test src/__tests__/*.test.ts",
