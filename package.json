@@ -1,41 +1,9 @@
 {
-  "name": "injectus",
-  "version": "0.2.2",
+  "name": "root",
+  "private": true,
+  "version": "0.0.0",
   "type": "module",
   "description": "High-performance, decorator-free IoC container for Node.js — sync inject(), explicit lifetimes, TC39-native disposal.",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist",
-    "LICENSE",
-    "README.md"
-  ],
-  "engines": {
-    "node": ">=22.6.0"
-  },
-  "devEngines": {
-    "runtime": {
-      "name": "node",
-      "version": ">=24.16.0"
-    }
-  },
-  "keywords": [
-    "dependency-injection",
-    "ioc-container",
-    "inversion-of-control",
-    "container",
-    "injector",
-    "inject",
-    "service-locator"
-  ],
-  "license": "ISC",
   "author": "Hossam Hamdy <hossamhamdy117@gmail.com> (https://github.com/hossam7amdy)",
   "repository": {
     "type": "git",
@@ -45,34 +13,30 @@
   "bugs": {
     "url": "https://github.com/hossam7amdy/injectus/issues"
   },
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=24.16.0"
+    }
+  },
   "scripts": {
-    "clean": "rm -rf dist",
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json",
-    "test": "node --test src/__tests__/*.test.ts",
-    "bench": "pnpm build && pnpm -F benchmarks bench",
-    "test:watch": "node --test --watch src/__tests__/*.test.ts",
-    "test:cov:node22": "node --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 \"src/__tests__/!(*.esnext).test.ts\"",
-    "test:cov": "node --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info src/__tests__/*.test.ts",
-    "preversion": "pnpm clean && pnpm build && pnpm check && pnpm typecheck && pnpm test:cov",
-    "prepublishOnly": "pnpm clean && pnpm build && pnpm check && pnpm typecheck && pnpm test:cov",
     "check": "biome check . && prettier --check \"**/*.{md,yaml}\"",
     "check:fix": "biome check . --write && prettier --write \"**/*.{md,yaml}\"",
-    "postpublish": "git push --follow-tags",
-    "release:dry": "pnpm publish --dry-run",
-    "release:alpha": "pnpm version prerelease --preid alpha -m \"chore(release): v%s\" && pnpm publish --tag alpha",
-    "release:patch": "pnpm version patch -m \"chore(release): v%s\" && pnpm publish",
-    "release:minor": "pnpm version minor -m \"chore(release): v%s\" && pnpm publish",
-    "release:major": "pnpm version major -m \"chore(release): v%s\" && pnpm publish"
+    "typecheck": "pnpm build && pnpm -r run typecheck",
+    "test": "pnpm build && pnpm -r run test",
+    "test:cov": "pnpm -r run test:cov",
+    "test:cov:node22": "pnpm -r run test:cov:node22",
+    "build": "pnpm -r run build",
+    "bench": "pnpm build && pnpm -F benchmarks bench"
   },
   "prettier": {
     "printWidth": 80,
     "tabWidth": 2,
     "useTabs": false,
     "proseWrap": "preserve"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
