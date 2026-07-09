@@ -46,7 +46,13 @@
     "test": "node --test src/__tests__/*.test.ts",
     "test:watch": "node --test --watch src/__tests__/*.test.ts",
     "test:cov:node22": "node --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 \"src/__tests__/!(*.esnext).test.ts\"",
-    "test:cov": "node --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info src/__tests__/*.test.ts"
+    "test:cov": "node --test --experimental-test-coverage --test-coverage-exclude='src/__tests__/*' --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info src/__tests__/*.test.ts",
+    "preversion": "pnpm build && pnpm typecheck && pnpm test:cov",
+    "release:dry": "pnpm publish --dry-run",
+    "release:alpha": "pnpm version prerelease --preid alpha -m \"chore(release): v%s\" && pnpm publish --tag alpha",
+    "release:patch": "pnpm version patch -m \"chore(release): v%s\" && pnpm publish",
+    "release:minor": "pnpm version minor -m \"chore(release): v%s\" && pnpm publish",
+    "release:major": "pnpm version major -m \"chore(release): v%s\" && pnpm publish"
   },
   "publishConfig": {
     "access": "public"
