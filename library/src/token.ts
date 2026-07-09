@@ -43,5 +43,5 @@ export type Token<T = unknown> =
  */
 export function tokenName(token: Token): string {
   if (token instanceof InjectionToken) return token.toString();
-  return (token as Constructor).name || String(token);
+  return (token && (token as Constructor).name) || String(token);
 }
