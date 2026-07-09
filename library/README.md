@@ -337,6 +337,15 @@ token.description; // string
 token.toString(); // "InjectionToken(description)"
 ```
 
+### `tokenName(token)`
+
+Human-readable label for a token — for logging and debugging.
+
+```ts
+tokenName(Service); // "Service"
+tokenName(new InjectionToken("PORT")); // "InjectionToken(PORT)"
+```
+
 ### `Lifetime`
 
 ```ts

@@ -1,9 +1,5 @@
 // Injection context
-export {
-  type InjectOptions,
-  inject,
-  withInjector,
-} from "./context.ts";
+export { type InjectOptions, inject, withInjector } from "./context.ts";
 // Errors
 export {
   CaptiveDependencyError,
@@ -14,10 +10,7 @@ export {
   TokenNotFoundError,
 } from "./errors.ts";
 // Injector
-export {
-  Injector,
-  type InjectorOptions,
-} from "./injector.ts";
+export { Injector, type InjectorOptions } from "./injector.ts";
 // Lifetimes
 export { Lifetime } from "./lifetime.ts";
 // Providers;
@@ -29,4 +22,9 @@ export type {
   ValueProvider,
 } from "./provider.ts";
 // Tokens
-export { type Constructor, InjectionToken, type Token } from "./token.ts";
+export {
+  type Constructor,
+  InjectionToken,
+  type Token,
+  tokenName,
+} from "./token.ts";

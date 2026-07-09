@@ -31,7 +31,16 @@ export type Token<T = unknown> =
   | InjectionToken<T>
   | (Function & { prototype: T });
 
-/** @internal Returns a human-readable name for a token. */
+/**
+ * Human-readable label for a token — for logging and debugging.
+ *
+ * Renders an `InjectionToken` via its `toString()`, a class or function
+ * token via its `.name`, or falls back to `String(token)` when unnamed.
+ *
+ * @example
+ * tokenName(Service); // "Service"
+ * tokenName(new InjectionToken("PORT")); // "InjectionToken(PORT)"
+ */
 export function tokenName(token: Token): string {
   if (token instanceof InjectionToken) return token.toString();
   return (token as Constructor).name || String(token);
