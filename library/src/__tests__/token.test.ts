@@ -47,4 +47,14 @@ describe("tokenName — human-readable name", TEST_OPTIONS, () => {
     ) => unknown;
     assert.equal(tokenName(Anon), String(Anon));
   });
+
+  it("falls back to String(token) instead of throwing for null", () => {
+    // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid token
+    assert.equal(tokenName(null as any), "null");
+  });
+
+  it("falls back to String(token) instead of throwing for undefined", () => {
+    // biome-ignore lint/suspicious/noExplicitAny: intentionally invalid token
+    assert.equal(tokenName(undefined as any), "undefined");
+  });
 });

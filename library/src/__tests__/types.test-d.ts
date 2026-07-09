@@ -17,6 +17,7 @@ import {
   type Provider,
   type Token,
   type TokenNotFoundError,
+  type tokenName,
   type ValueProvider,
   withInjector,
 } from "../index.ts";
@@ -107,6 +108,8 @@ export type Contracts = [
   Expect<
     Equal<ConstructorParameters<typeof InjectionToken>, [description: string]>
   >,
+  Expect<Equal<Parameters<typeof tokenName>, [Token]>>,
+  Expect<Equal<ReturnType<typeof tokenName>, string>>,
   // ── InjectOptions ──
   Expect<Equal<InjectOptions, { optional?: boolean }>>,
   // ── InjectorOptions ──
